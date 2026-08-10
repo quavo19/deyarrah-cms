@@ -1,0 +1,115 @@
+const BASE_URL = import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+
+export const ENDPOINTS = {
+  AUTH: {
+    LOGIN: `${BASE_URL}/auth/login`,
+    LOGOUT: `${BASE_URL}/auth/logout`,
+    REGISTER: `${BASE_URL}/auth/register`,
+    SIGNUP: `${BASE_URL}/auth/signup`,
+    REFRESH: `${BASE_URL}/auth/refresh`,
+    PROFILE: `${BASE_URL}/users/profile`,
+    OTP_VERIFY: `${BASE_URL}/users/otp/verify`,
+    FORGOT_PASSWORD: `${BASE_URL}/auth/password`,
+    RESET_PASSWORD: `${BASE_URL}/auth/password`,
+  },
+  USERS: {
+    PROFILE: `${BASE_URL}/users/profile`,
+    PASSWORD: `${BASE_URL}/users/password`,
+    OTP_TOGGLE: `${BASE_URL}/users/otp/toggle`,
+    LIST: `${BASE_URL}/users`,
+    DETAIL: (id) => `${BASE_URL}/users/${id}`,
+    ASSIGN_ROLE: (id, roleId) => `${BASE_URL}/users/${id}/role/${roleId}`,
+    ASSIGN_PERMISSIONS: (id) => `${BASE_URL}/users/${id}/permissions`,
+    UNASSIGN_PERMISSIONS: (id) => `${BASE_URL}/users/${id}/permissions`,
+    BLOCK: (id) => `${BASE_URL}/users/${id}/block`,
+    UNBLOCK: (id) => `${BASE_URL}/users/${id}/unblock`,
+  },
+  ROLES: {
+    LIST: `${BASE_URL}/roles`,
+    UPDATE: (id) => `${BASE_URL}/roles/${id}`,
+  },
+  PERMISSIONS: {
+    LIST: `${BASE_URL}/permissions`,
+  },
+  PRODUCTS: {
+    LIST: `${BASE_URL}/products/products`,
+    DETAIL: (id) => `${BASE_URL}/products/products/${id}`,
+    CREATE: `${BASE_URL}/products/products`,
+    UPDATE: (id) => `${BASE_URL}/products/products/${id}`,
+    DELETE: (id) => `${BASE_URL}/products/products/${id}`,
+    PRODUCT_META: {
+      LIST: (productId) => `${BASE_URL}/products/products/${productId}/product_meta`,
+      CREATE: (productId) => `${BASE_URL}/products/products/${productId}/product_meta`,
+      UPDATE: (productId, metaId) => `${BASE_URL}/products/products/${productId}/product_meta/${metaId}`,
+      DELETE: (productId, metaId) => `${BASE_URL}/products/products/${productId}/product_meta/${metaId}`,
+    },
+    VARIANTS: {
+      LIST: (productId) => `${BASE_URL}/products/products/${productId}/variants`,
+      DETAIL: (variantId) => `${BASE_URL}/products/variants/${variantId}`,
+      CREATE: (productId) => `${BASE_URL}/products/products/${productId}/variants`,
+      UPDATE: (variantId) => `${BASE_URL}/products/variants/${variantId}`,
+      DELETE: (variantId) => `${BASE_URL}/products/variants/${variantId}`,
+      OPTIONS: {
+        LIST: (variantId) => `${BASE_URL}/products/variants/${variantId}/options`,
+        CREATE: (variantId) => `${BASE_URL}/products/variants/${variantId}/options`,
+        UPDATE: (variantId, optionId) => `${BASE_URL}/products/variants/${variantId}/options/${optionId}`,
+        DELETE: (variantId, optionId) => `${BASE_URL}/products/variants/${variantId}/options/${optionId}`,
+        IMAGES: {
+          CREATE: (variantId, optionId) => `${BASE_URL}/products/variants/${variantId}/options/${optionId}/images`,
+          DELETE: (variantId, optionId, imageId) => `${BASE_URL}/products/variants/${variantId}/options/${optionId}/images/${imageId}`,
+        },
+      },
+    },
+    IMAGES: {
+      LIST: `${BASE_URL}/products/images`,
+      CREATE: (productId) => `${BASE_URL}/products/products/${productId}/images`,
+      UPDATE: (imageId) => `${BASE_URL}/products/images/${imageId}`,
+      DELETE: (productId, imageId) => `${BASE_URL}/products/products/${productId}/images/${imageId}`,
+    },
+  },
+  INVENTORY: {
+    VARIANT_STOCKS: {
+      LIST: `${BASE_URL}/inventory/variant_stocks`,
+      DETAIL: (stockId) => `${BASE_URL}/inventory/variant_stocks/${stockId}`,
+      CREATE: `${BASE_URL}/inventory/variant_stocks`,
+      UPDATE: (stockId) => `${BASE_URL}/inventory/variant_stocks/${stockId}`,
+      DELETE: (stockId) => `${BASE_URL}/inventory/variant_stocks/${stockId}`,
+    },
+    DOWNTIMES: {
+      LIST: `${BASE_URL}/inventory/downtimes`,
+      DETAIL: (id) => `${BASE_URL}/inventory/downtimes/${id}`,
+      CREATE: `${BASE_URL}/inventory/downtimes`,
+      UPDATE: (id) => `${BASE_URL}/inventory/downtimes/${id}`,
+      DELETE: (id) => `${BASE_URL}/inventory/downtimes/${id}`,
+      END_EARLY: (id) => `${BASE_URL}/inventory/downtimes/${id}/end_early`,
+    },
+  },
+  BOOKINGS: {
+    CREATE: `${BASE_URL}/bookings/bookings`,
+    LIST: `${BASE_URL}/bookings/bookings`,
+    DETAIL: (id) => `${BASE_URL}/bookings/bookings/${id}`,
+  },
+  CATEGORIES: {
+    LIST: `${BASE_URL}/categories`,
+    CREATE: `${BASE_URL}/categories`,
+    DELETE: (id) => `${BASE_URL}/categories/${id}`,
+  },
+  WAREHOUSES: {
+    LIST: `${BASE_URL}/warehouses`,
+    DETAIL: (id) => `${BASE_URL}/warehouses/${id}`,
+    CREATE: `${BASE_URL}/warehouses`,
+    UPDATE: (id) => `${BASE_URL}/warehouses/${id}`,
+    DELETE: (id) => `${BASE_URL}/warehouses/${id}`,
+    IMAGES: {
+      LIST: (warehouseId) => `${BASE_URL}/warehouses/${warehouseId}/images`,
+      CREATE: (warehouseId) => `${BASE_URL}/warehouses/${warehouseId}/images`,
+      DELETE: (warehouseId, imageId) => `${BASE_URL}/warehouses/${warehouseId}/images/${imageId}`,
+    },
+  },
+  CONTACTS: {
+    LIST: `${BASE_URL}/contacts`,
+    DELETE: (id) => `${BASE_URL}/contacts/${id}`,
+  },
+}
+
+export { BASE_URL }
