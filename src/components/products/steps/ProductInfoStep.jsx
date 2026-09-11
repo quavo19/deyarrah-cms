@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
@@ -5,7 +6,7 @@ import Select from '@/components/ui/Select'
 import { categoryService } from '@/services/category.service'
 
 const ProductInfoStep = ({ formData, errors, onChange }) => {
-  const bookableTypeOptions = [
+  const productTypeOptions = [
     { value: 'bulk', label: 'Bulk (with variants)' },
     { value: 'unit', label: 'Unit (no variants)' },
   ]
@@ -15,15 +16,56 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
     queryFn: categoryService.getAllCategories,
   })
 
+  const { data: subCategoriesData, isLoading: isLoadingSubCategories } = useQuery({
+    queryKey: ['sub_categories'],
+    queryFn: () => categoryService.getAllSubCategories(),
+  })
+
   const categoryOptions = categoriesData?.data
-    ? [
-        { value: '', label: 'Select a category' },
-        ...categoriesData.data.map((category) => ({
-          value: category.id,
-          label: category?.name || category?.id,
-        })),
-      ]
-    : [{ value: '', label: 'Loading categories...' }]
+    ? categoriesData.data.map((category) => ({
+        value: category.id,
+        label: category?.name || category?.id,
+      }))
+    : []
+
+  const selectedCategoryIds = useMemo(
+    () => formData.category_ids || (formData.category_id ? [formData.category_id] : []),
+    [formData.category_id, formData.category_ids]
+  )
+  const selectedSubCategoryIds = useMemo(
+    () => formData.sub_category_ids || [],
+    [formData.sub_category_ids]
+  )
+
+  const subCategoryOptions = useMemo(() => {
+    const selected = new Set(selectedCategoryIds)
+
+    return (subCategoriesData?.data || [])
+      .filter((subCategory) => selected.has(subCategory.category_id))
+      .map((subCategory) => ({
+        value: subCategory.id,
+        label: `${subCategory.name} (${subCategory.category?.name || 'Category'})`,
+      }))
+  }, [selectedCategoryIds, subCategoriesData])
+
+  const toggleArrayValue = (name, value) => {
+    const currentValues = name === 'category_ids' ? selectedCategoryIds : selectedSubCategoryIds
+    const nextValues = currentValues.includes(value)
+      ? currentValues.filter((item) => item !== value)
+      : [...currentValues, value]
+
+    if (name === 'category_ids') {
+      const selectedCategories = new Set(nextValues)
+      const allowedSubCategoryIds = (subCategoriesData?.data || [])
+        .filter((subCategory) => selectedCategories.has(subCategory.category_id))
+        .map((subCategory) => subCategory.id)
+
+      onChange({ target: { name: 'sub_category_ids', value: selectedSubCategoryIds.filter((id) => allowedSubCategoryIds.includes(id)) } })
+      onChange({ target: { name: 'category_id', value: nextValues[0] || '' } })
+    }
+
+    onChange({ target: { name, value: nextValues } })
+  }
 
   return (
     <div className="space-y-6">
@@ -62,28 +104,37 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
 
         <div>
           <Select
-            label="Bookable Type"
+            label="Product Type"
             name="bookable_type"
             value={formData.bookable_type || ''}
             onChange={onChange}
-            options={bookableTypeOptions}
+            options={productTypeOptions}
             error={errors.bookable_type}
             required
-            placeholder="Select bookable type"
+            placeholder="Select product type"
           />
         </div>
 
-        <div>
-          <Select
-            label="Category"
-            name="category_id"
-            value={formData.category_id || ''}
-            onChange={onChange}
+        <div className="md:col-span-2">
+          <MultiChoice
+            label="Categories"
             options={categoryOptions}
-            error={errors.category_id}
-            required
-            placeholder="Select a category"
-            disabled={isLoadingCategories}
+            selectedValues={selectedCategoryIds}
+            onToggle={(value) => toggleArrayValue('category_ids', value)}
+            error={errors.category_ids}
+            isLoading={isLoadingCategories}
+            emptyText="No categories found"
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <MultiChoice
+            label="Subcategories"
+            options={subCategoryOptions}
+            selectedValues={selectedSubCategoryIds}
+            onToggle={(value) => toggleArrayValue('sub_category_ids', value)}
+            isLoading={isLoadingSubCategories}
+            emptyText={selectedCategoryIds.length === 0 ? 'Select categories first' : 'No subcategories found'}
           />
         </div>
 
@@ -100,6 +151,20 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
             placeholder="0.00"
           />
         </div>
+
+        <div>
+          <Input
+            label="Bonus Points"
+            name="bonus_points"
+            type="number"
+            step="1"
+            min="0"
+            value={formData.bonus_points || ''}
+            onChange={onChange}
+            error={errors.bonus_points}
+            placeholder="0"
+          />
+        </div>
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -113,3 +178,31 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
 }
 
 export default ProductInfoStep
+
+const MultiChoice = ({ label, options, selectedValues, onToggle, error, isLoading, emptyText }) => (
+  <div>
+    <div className="block text-sm font-medium mb-2 text-gray-700">{label}</div>
+    <div className={`border rounded-lg p-3 min-h-12 ${error ? 'border-red-500' : 'border-gray-200'}`}>
+      {isLoading ? (
+        <div className="text-sm text-gray-500">Loading...</div>
+      ) : options.length === 0 ? (
+        <div className="text-sm text-gray-500">{emptyText}</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {options.map((option) => (
+            <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={selectedValues.includes(option.value)}
+                onChange={() => onToggle(option.value)}
+                className="h-4 w-4 accent-primary"
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+    {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+  </div>
+)

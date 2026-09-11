@@ -103,7 +103,7 @@ const AddImageModal = ({ open, onClose, productId, variantId, optionId, onSucces
               setErrors(prev => ({ ...prev, imageUrl: undefined }))
             }
           }}
-          placeholder="https://example.com/image.jpg"
+          placeholder="https://image-url.local/image.jpg"
           required
           error={errors.imageUrl}
         />

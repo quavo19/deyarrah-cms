@@ -9,6 +9,7 @@ import Checkbox from '@/components/ui/Checkbox'
 import UsersTab from './Users/UsersTab'
 import RolesTab from './Users/RolesTab'
 import PermissionsTab from './Users/PermissionsTab'
+import BadgesTab from './Users/BadgesTab'
 
 const Users = () => {
   const toast = useToast()
@@ -96,14 +97,14 @@ const Users = () => {
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col mb-6">
           <h1 className="text-2xl font-bold ">User Management</h1>
-          <p className="text-gray-600">Manage users, roles, and permissions.</p>
+          <p className="text-gray-600">Manage users, roles, permissions, and badges.</p>
         </div>
 
         <div className="border-b border-gray-200 max-w-fit mb-6">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('users')}
-              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'users'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -113,7 +114,7 @@ const Users = () => {
             </button>
             <button
               onClick={() => setActiveTab('roles')}
-              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'roles'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -123,13 +124,23 @@ const Users = () => {
             </button>
             <button
               onClick={() => setActiveTab('permissions')}
-              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                 activeTab === 'permissions'
                   ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Permissions
+            </button>
+            <button
+              onClick={() => setActiveTab('badges')}
+              className={`py-4 px-6 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+                activeTab === 'badges'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Badges
             </button>
           </nav>
         </div>
@@ -147,6 +158,8 @@ const Users = () => {
         {activeTab === 'permissions' && (
           <PermissionsTab permissions={permissions} isLoading={isLoadingPermissions} />
         )}
+
+        {activeTab === 'badges' && <BadgesTab />}
 
         <ModalSheet
           open={permissionsModal.open}

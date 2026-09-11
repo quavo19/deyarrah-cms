@@ -256,7 +256,7 @@ const DowntimeModal = ({ open, onClose, productId }) => {
       open={open}
       onClose={handleClose}
       heading="Schedule Downtime"
-      description="Schedule a downtime period for one or more variant stocks. During this time, the selected stocks will be unavailable for bookings."
+      description="Schedule a downtime period for one or more variant stocks. During this time, the selected stocks will be unavailable for orders."
       className="max-w-lg"
     >
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">

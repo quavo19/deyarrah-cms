@@ -1,6 +1,6 @@
 #!/bin/bash
 # Load environment variables
-source /home/terminal_ideas/platinumvault-cms/.env
+source /home/terminal_ideas/deyarrah-cms/.env
 
 # Email settings
 LOG_FILE="/tmp/deploy_$(date +%s).log"
@@ -19,7 +19,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 # Navigate to project directory (adjust path as needed)
-cd ~/platinumvault-cms || { echo "CD failed"; exit 1; }
+cd ~/deyarrah-cms || { echo "CD failed"; exit 1; }
 
 #use node version 20
 nvm use 20
@@ -46,14 +46,14 @@ nvm use 18
 echo "Restarting PM2 process with ecosystem.config.cjs..."
 
 # stop & remove old process if it exists
-# pm2 delete platinumvault-cms || true
+# pm2 delete deyarrah-cms || true
 
 # start fresh using ecosystem config
 #PORT=3002 pm2 start ecosystem.config.cjs --update-env
 
 # save the PM2 process list so it auto-restores on reboot
 #pm2 save
-pm2 restart platinumvault-cms
+pm2 restart deyarrah-cms
 
 echo "==== Deployment succeeded ==="
 STATUS="SUCCESS"
@@ -84,7 +84,7 @@ echo "Recipients: $ADMIN_EMAILS" | tee -a "$LOG_FILE"
 sendemail \
   -f "$FROM_EMAIL" \
   -t "$ADMIN_EMAILS" \
-  -u "Platinum Vault CMS Deploy $STATUS" \
+  -u "Deyarrah CMS Deploy $STATUS" \
   -m "Deployment result: $STATUS\nTime: $DEPLOYMENT_TIME\nCommit: $COMMIT_INFO\n\nLogs:\n$(cat "$LOG_FILE")" \
   -s smtp.mailgun.org:587 \
   -xu "$SMTP_USER" \

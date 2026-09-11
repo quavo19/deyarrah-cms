@@ -41,7 +41,10 @@ export const productService = {
           bookable_type: productData.bookable_type,
           active: productData.active ?? true,
           category_id: productData.category_id,
-          delivery_rate_per_km: productData.delivery_rate_per_km || null
+          category_ids: productData.category_ids || (productData.category_id ? [productData.category_id] : []),
+          sub_category_ids: productData.sub_category_ids || [],
+          delivery_rate_per_km: productData.delivery_rate_per_km || null,
+          bonus_points: productData.bonus_points || 0
         }
       })
 
@@ -545,6 +548,11 @@ export const productService = {
 
   deleteProduct: async (id) => {
     const response = await api.delete(ENDPOINTS.PRODUCTS.DELETE(id))
+    return response.data
+  },
+
+  deleteReview: async (productId, reviewId) => {
+    const response = await api.delete(ENDPOINTS.PRODUCTS.REVIEWS.DELETE(productId, reviewId))
     return response.data
   },
 

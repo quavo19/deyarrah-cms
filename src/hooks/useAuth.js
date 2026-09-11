@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/hooks/useToast'
 import { getUserRole } from '@/utils/roleGuard'
 
+const CUSTOMER_APP_URL = import.meta.env.VITE_CUSTOMER_APP_URL || 'http://localhost:5174'
+
 export const useAuth = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -71,7 +73,7 @@ export const useAuth = () => {
       if (userRole === 'CUSTOMER') {
         // localStorage.removeItem('token')
         // queryClient.clear()
-        window.location.href = 'https://platinumvault.com'
+        window.location.href = CUSTOMER_APP_URL
       }
     }
   }, [user, isLoading, queryClient])
@@ -84,7 +86,7 @@ export const useAuth = () => {
         queryClient.setQueryData(['auth', 'me'], data.user)
         const userRole = getUserRole(data.user)
         if (userRole === 'CUSTOMER') {
-          window.location.href = 'https://platinumvault.com'
+          window.location.href = CUSTOMER_APP_URL
           return
         }
         
@@ -101,7 +103,7 @@ export const useAuth = () => {
         queryClient.setQueryData(['auth', 'me'], data.user)
         const userRole = getUserRole(data.user)
         if (userRole === 'CUSTOMER') {
-          window.location.href = 'https://platinumvault.com'
+          window.location.href = CUSTOMER_APP_URL
           return
         }
         

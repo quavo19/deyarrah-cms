@@ -49,15 +49,21 @@ export const routes = [
     roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
-    title: "Bookings",
+    title: "Orders",
     icon: ClipboardList,
-    path: "/bookings",
+    path: "/orders",
     roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
-    title: "My Bookings",
+    title: "Support",
+    icon: Mail,
+    path: "/support",
+    roles: ["ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    title: "My Orders",
     icon: ClipboardList,
-    path: "/my-bookings",
+    path: "/my-orders",
     roles: ["STAFF"],
   },
   {

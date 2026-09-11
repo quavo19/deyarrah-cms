@@ -4,7 +4,7 @@ import TableSkeleton from '@/components/ui/TableSkeleton'
 const PermissionsTab = ({ permissions, isLoading }) => {
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg overflow-hidden">
+      <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">

@@ -31,12 +31,24 @@ export const ENDPOINTS = {
   PERMISSIONS: {
     LIST: `${BASE_URL}/permissions`,
   },
+  BADGES: {
+    LIST: `${BASE_URL}/badges`,
+    DETAIL: (id) => `${BASE_URL}/badges/${id}`,
+    CREATE: `${BASE_URL}/badges`,
+    UPDATE: (id) => `${BASE_URL}/badges/${id}`,
+    DELETE: (id) => `${BASE_URL}/badges/${id}`,
+    ADD_USER: (id, userId) => `${BASE_URL}/badges/${id}/users/${userId}`,
+    REMOVE_USER: (id, userId) => `${BASE_URL}/badges/${id}/users/${userId}`,
+  },
   PRODUCTS: {
     LIST: `${BASE_URL}/products/products`,
     DETAIL: (id) => `${BASE_URL}/products/products/${id}`,
     CREATE: `${BASE_URL}/products/products`,
     UPDATE: (id) => `${BASE_URL}/products/products/${id}`,
     DELETE: (id) => `${BASE_URL}/products/products/${id}`,
+    REVIEWS: {
+      DELETE: (productId, reviewId) => `${BASE_URL}/products/products/${productId}/reviews/${reviewId}`,
+    },
     PRODUCT_META: {
       LIST: (productId) => `${BASE_URL}/products/products/${productId}/product_meta`,
       CREATE: (productId) => `${BASE_URL}/products/products/${productId}/product_meta`,
@@ -84,15 +96,24 @@ export const ENDPOINTS = {
       END_EARLY: (id) => `${BASE_URL}/inventory/downtimes/${id}/end_early`,
     },
   },
-  BOOKINGS: {
-    CREATE: `${BASE_URL}/bookings/bookings`,
-    LIST: `${BASE_URL}/bookings/bookings`,
-    DETAIL: (id) => `${BASE_URL}/bookings/bookings/${id}`,
+  ORDERS: {
+    CREATE: `${BASE_URL}/orders`,
+    LIST: `${BASE_URL}/orders`,
+    DETAIL: (id) => `${BASE_URL}/orders/${id}`,
   },
   CATEGORIES: {
     LIST: `${BASE_URL}/categories`,
+    DETAIL: (id) => `${BASE_URL}/categories/${id}`,
     CREATE: `${BASE_URL}/categories`,
+    UPDATE: (id) => `${BASE_URL}/categories/${id}`,
     DELETE: (id) => `${BASE_URL}/categories/${id}`,
+  },
+  SUB_CATEGORIES: {
+    LIST: `${BASE_URL}/sub_categories`,
+    DETAIL: (id) => `${BASE_URL}/sub_categories/${id}`,
+    CREATE: `${BASE_URL}/sub_categories`,
+    UPDATE: (id) => `${BASE_URL}/sub_categories/${id}`,
+    DELETE: (id) => `${BASE_URL}/sub_categories/${id}`,
   },
   WAREHOUSES: {
     LIST: `${BASE_URL}/warehouses`,
@@ -109,6 +130,12 @@ export const ENDPOINTS = {
   CONTACTS: {
     LIST: `${BASE_URL}/contacts`,
     DELETE: (id) => `${BASE_URL}/contacts/${id}`,
+  },
+  SUPPORT: {
+    LIST: `${BASE_URL}/support_requests`,
+    DETAIL: (id) => `${BASE_URL}/support_requests/${id}`,
+    UPDATE: (id) => `${BASE_URL}/support_requests/${id}`,
+    DELETE: (id) => `${BASE_URL}/support_requests/${id}`,
   },
 }
 

@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { bookingAdminService } from '@/services/booking.admin.service'
+import { orderAdminService } from '@/services/order.admin.service'
 import BackButton from '@/components/ui/BackButton'
 import Badge from '@/components/ui/Badge'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import Image from '@/components/ui/Image'
 import Button from '@/components/ui/Button'
-import { Package, MapPin, Calendar, DollarSign, User, Truck, MoreVertical, Link } from 'lucide-react'
-import FulfillmentStatusModal from '@/components/bookings/FulfillmentStatusModal'
+import { Package, MapPin, DollarSign, User, Truck, MoreVertical, Link } from 'lucide-react'
+import FulfillmentStatusModal from '@/components/orders/FulfillmentStatusModal'
 
 const statusVariant = (status) => {
   switch (status) {
@@ -49,8 +49,9 @@ const decodeVariantOptions = (variantNames) => {
     const [rawKey, rawValue] = part.split(':')
     if (!rawKey || !rawValue) return null
 
-    const key = rawKey.trim().toLowerCase()
-    const value = rawValue.trim().toLowerCase()
+    const key = rawKey.trim()
+    const value = rawValue.trim()
+    if (key.toLowerCase() === 'base') return null
 
     return { key, value }
   }).filter(Boolean)
@@ -79,20 +80,20 @@ const buildCustomerProductUrl = (itemAttrs, snapshot) => {
   return `${baseUrl}${productPath}${query}${hash}`
 }
 
-const BookingDetail = () => {
+const OrderDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
 
   // Determine if we're on the staff route or admin route
-  const isStaffRoute = location.pathname.startsWith('/my-bookings')
-  const backPath = isStaffRoute ? '/my-bookings' : '/bookings'
-  const queryKey = isStaffRoute ? ['booking-detail-staff', id] : ['booking-detail', id]
+  const isStaffRoute = location.pathname.startsWith('/my-orders')
+  const backPath = isStaffRoute ? '/my-orders' : '/orders'
+  const queryKey = isStaffRoute ? ['order-detail-staff', id] : ['order-detail', id]
 
-  const { data: bookingData, isLoading } = useQuery({
+  const { data: orderData, isLoading } = useQuery({
     queryKey,
-    queryFn: () => bookingAdminService.getById(id),
+    queryFn: () => orderAdminService.getById(id),
     enabled: !!id,
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
@@ -102,11 +103,11 @@ const BookingDetail = () => {
   })
 
 
-  const booking = bookingData?.data
-  const attrs = booking?.attributes || {}
-  const relationships = booking?.relationships || {}
+  const order = orderData?.data
+  const attrs = order?.attributes || {}
+  const relationships = order?.relationships || {}
   const customerAddress = relationships?.customer_address
-  const bookingItems = relationships?.booking_items?.data || []
+  const orderItems = relationships?.order_items?.data || []
   const fulfillments = relationships?.fulfillments?.data || []
 
   const formatDate = (value) => {
@@ -145,17 +146,17 @@ const BookingDetail = () => {
     )
   }
 
-  if (!booking) {
+  if (!order) {
     return (
       <div className="bg-gray-50 min-h-screen montserrat py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
-            <p className="text-gray-600">Booking not found</p>
+            <p className="text-gray-600">Order not found</p>
             <button
               onClick={() => navigate(backPath)}
               className="mt-4 text-blue-600 hover:text-blue-800"
             >
-              Back to {isStaffRoute ? 'My Bookings' : 'Bookings'}
+              Back to {isStaffRoute ? 'My Orders' : 'Orders'}
             </button>
           </div>
         </div>
@@ -173,7 +174,7 @@ const BookingDetail = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Booking #{booking.id?.slice(0, 8)}
+                Order #{attrs.order_id || order.id?.slice(0, 8)}
               </h1>
               
             </div>
@@ -198,7 +199,7 @@ const BookingDetail = () => {
               <div className="p-2 bg-blue-50 rounded-lg">
                 <Package className="w-5 h-5 text-gray-600" />
               </div>
-              <h2 className="text-base font-semibold text-gray-900">Booking Information</h2>
+              <h2 className="text-base font-semibold text-gray-900">Order Information</h2>
             </div>
             <dl className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-start gap-3">
@@ -206,26 +207,8 @@ const BookingDetail = () => {
                   <Package className="w-4 h-4 text-gray-600" />
                 </div>
                 <div className="flex-1">
-                  <dt className="text-sm font-light text-gray-500 mb-1">Product</dt>
-                  <dd className="text-sm text-gray-900 font-light">{attrs.product_name || '—'}</dd>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
-                  <Calendar className="w-4 h-4 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <dt className="text-sm font-light text-gray-500 mb-1">Start Date</dt>
-                  <dd className="text-sm text-gray-900 font-light">{formatDate(attrs.start_at)}</dd>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
-                  <Calendar className="w-4 h-4 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <dt className="text-sm font-light text-gray-500 mb-1">End Date</dt>
-                  <dd className="text-sm text-gray-900 font-light">{formatDate(attrs.end_at)}</dd>
+                  <dt className="text-sm font-light text-gray-500 mb-1">Order ID</dt>
+                  <dd className="text-sm text-gray-900 font-light">#{attrs.order_id || order.id?.slice(0, 8) || '—'}</dd>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -357,11 +340,11 @@ const BookingDetail = () => {
             </div>
           )}
 
-          {bookingItems.length > 0 && (
+          {orderItems.length > 0 && (
             <div className="">
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Booking Items</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Order Items</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {bookingItems.map((item) => {
+                {orderItems.map((item) => {
                   const itemAttrs = item.attributes || {}
                   const snapshot = itemAttrs.snapshot || {}
                   const imageUrl = itemAttrs.image?.url
@@ -386,7 +369,7 @@ const BookingDetail = () => {
                       <div className="flex-1 flex flex-col justify-between">
                         <div className="flex flex-col gap-1">
                           <div className="text-xs font-medium text-gray-900 line-clamp-2">
-                            {attrs.product_name || snapshot.variant_stock_option_names || 'Product'}
+                            {itemAttrs.product_name || snapshot.variant_stock_option_names || 'Product'}
                           </div>
                           {variantOptions.length > 0 && (
                             <div className="text-[11px] text-gray-500 flex gap-1 flex-wrap">
@@ -509,11 +492,11 @@ const BookingDetail = () => {
               open={fulfillmentModalOpen}
               onClose={handleFulfillmentModalClose}
               fulfillment={selectedFulfillment}
-              bookingId={id}
+              orderId={id}
               onSuccess={() => {
                 queryClient.invalidateQueries({ queryKey })
-                queryClient.invalidateQueries({ queryKey: ['booking-detail', id] })
-                queryClient.invalidateQueries({ queryKey: ['booking-detail-staff', id] })
+                queryClient.invalidateQueries({ queryKey: ['order-detail', id] })
+                queryClient.invalidateQueries({ queryKey: ['order-detail-staff', id] })
                 handleFulfillmentModalClose()
               }}
             />
@@ -524,4 +507,4 @@ const BookingDetail = () => {
   )
 }
 
-export default BookingDetail
+export default OrderDetail

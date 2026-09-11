@@ -2,5 +2,6 @@
 export { authService } from './auth.service'
 export { userService } from './user.service'
 export { productService } from './product.service'
-export { bookingService } from './booking.service'
-export { bookingAdminService } from './booking.admin.service'
+export { orderService } from './order.service'
+export { orderAdminService } from './order.admin.service'
+export { supportService } from './support.service'

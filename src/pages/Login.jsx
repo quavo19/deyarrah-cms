@@ -5,7 +5,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { useMutation } from '@tanstack/react-query'
 import { authService } from '@/services/auth.service'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { validateLoginForm } from '@/utils'
 import logoImage from '@/assets/images/logo.png'
@@ -113,10 +113,7 @@ const Login = () => {
           />
           <h2 className="text-3xl font-bold text-center ">Login</h2>
           <p className="mt-2 text-sm text-center text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-primary hover:text-primary-dark font-medium cursor-pointer">
-              Sign up
-            </Link>
+            Admin and staff access only
           </p>
         </div>
         <div className="mt-8 flex flex-col gap-6">

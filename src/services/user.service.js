@@ -86,4 +86,44 @@ export const userService = {
     const response = await api.get(ENDPOINTS.PERMISSIONS.LIST)
     return response.data
   },
+
+  // Badge Management
+  getAllBadges: async () => {
+    const response = await api.get(ENDPOINTS.BADGES.LIST)
+    return response.data
+  },
+
+  getBadgeById: async (id) => {
+    const response = await api.get(ENDPOINTS.BADGES.DETAIL(id))
+    return response.data
+  },
+
+  createBadge: async (badgeData) => {
+    const response = await api.post(ENDPOINTS.BADGES.CREATE, {
+      badge: badgeData,
+    })
+    return response.data
+  },
+
+  updateBadge: async (id, badgeData) => {
+    const response = await api.put(ENDPOINTS.BADGES.UPDATE(id), {
+      badge: badgeData,
+    })
+    return response.data
+  },
+
+  deleteBadge: async (id) => {
+    const response = await api.delete(ENDPOINTS.BADGES.DELETE(id))
+    return response.data
+  },
+
+  addBadgeUser: async (badgeId, userId) => {
+    const response = await api.post(ENDPOINTS.BADGES.ADD_USER(badgeId, userId))
+    return response.data
+  },
+
+  removeBadgeUser: async (badgeId, userId) => {
+    const response = await api.delete(ENDPOINTS.BADGES.REMOVE_USER(badgeId, userId))
+    return response.data
+  },
 }

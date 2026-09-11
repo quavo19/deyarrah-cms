@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { bookingAdminService } from '@/services/booking.admin.service'
+import { orderAdminService } from '@/services/order.admin.service'
 import { SearchInput } from '@/components/ui/SearchInput'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import TableSkeleton from '@/components/ui/TableSkeleton'
+import Image from '@/components/ui/Image'
 import { RefreshCw, MoreVertical, Eye } from 'lucide-react'
-import BookingStaffActionModal from '@/components/bookings/BookingStaffActionModal'
+import OrderAdminActionModal from '@/components/orders/OrderAdminActionModal'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -45,24 +46,28 @@ const paymentVariant = (paymentStatus) => {
   }
 }
 
-const MyBookings = () => {
+const OrdersAdmin = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const initialStatus = searchParams.get('status') || ''
+
   const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(initialStatus)
   const [page, setPage] = useState(1)
   const [actionModalOpen, setActionModalOpen] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [selectedOrder, setSelectedOrder] = useState(null)
   const perPage = 25
 
   const {
-    data: bookingsData,
+    data: ordersData,
     isLoading,
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['bookings-staff', { search, status, page, perPage }],
+    queryKey: ['orders-admin', { search, status, page, perPage }],
     queryFn: () => {
       const params = {
         search: search || undefined,
@@ -70,7 +75,7 @@ const MyBookings = () => {
         page,
         per_page: perPage,
       }
-      return bookingAdminService.listAssigned(params)
+      return orderAdminService.list(params)
     },
     refetchOnMount: 'always',
     refetchOnWindowFocus: 'always',
@@ -79,31 +84,18 @@ const MyBookings = () => {
     cacheTime: 0,
   })
 
-  const bookings = bookingsData?.data || []
-  const meta = bookingsData?.meta || {}
+  const orders = ordersData?.data || []
+  const meta = ordersData?.meta || {}
   const totalPages = meta.total_pages || 1
 
-  const handleActionClick = (booking) => {
-    setSelectedBooking(booking)
+  const handleActionClick = (order) => {
+    setSelectedOrder(order)
     setActionModalOpen(true)
   }
 
   const handleModalClose = () => {
     setActionModalOpen(false)
-    setSelectedBooking(null)
-  }
-
-  const formatDate = (value) => {
-    if (!value) return '—'
-    const d = new Date(value)
-    if (Number.isNaN(d.getTime())) return '—'
-    return d.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    setSelectedOrder(null)
   }
 
   return (
@@ -111,30 +103,39 @@ const MyBookings = () => {
       <div className="max-w-7xl mx-auto p-2 sm:p-6">
         <div className="flex flex-col mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">My Bookings</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Orders</h1>
             <p className="text-sm sm:text-base text-gray-600">
-              View and manage bookings assigned to you.
+              View and manage all orders.
             </p>
           </div>
         </div>
 
         <div className="mb-6 flex items-center justify-between gap-4 w-full flex-col sm:flex-row">
-          <SearchInput
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
-            placeholder="Search by booking ID or product name..."
-            className="w-full!"
-          />
+            <SearchInput
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
+              placeholder="Search by order ID or customer..."
+              className="w-full!"
+            />
           <div className="flex gap-3 w-full! sm:w-auto!">
             <Select
               name="status"
               value={status}
               onChange={(e) => {
-                setStatus(e.target.value)
+                const value = e.target.value
+                setStatus(value)
                 setPage(1)
+
+                const nextParams = new URLSearchParams(searchParams)
+                if (value) {
+                  nextParams.set('status', value)
+                } else {
+                  nextParams.delete('status')
+                }
+                setSearchParams(nextParams)
               }}
               options={STATUS_OPTIONS}
               selectClassName=" py-2! text-sm! rounded-lg! min-w-40!"
@@ -157,13 +158,7 @@ const MyBookings = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    Start
-                  </th>
-                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                    End
+                    Order
                   </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -174,6 +169,9 @@ const MyBookings = () => {
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                     Total
                   </th>
+                  <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                    Assigned To
+                  </th>
                   <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -182,44 +180,38 @@ const MyBookings = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8">
+                    <td colSpan="6" className="px-6 py-8">
                       <TableSkeleton />
                     </td>
                   </tr>
-                ) : bookings.length === 0 ? (
+                ) : orders.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                      {search || status ? 'No bookings found matching your filters' : 'No bookings found'}
+                    <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                      {search || status ? 'No orders found matching your filters' : 'No orders found'}
                     </td>
                   </tr>
                 ) : (
-                  bookings.map((booking) => {
-                    const attrs = booking.attributes || {}
+                  orders.map((order) => {
+                    const attrs = order.attributes || {}
                     const currentStatus = attrs.status
                     const paymentStatus = attrs.payment_status
 
                     return (
-                      <tr key={booking.id} className="hover:bg-gray-50">
+                      <tr key={order.id} className="hover:bg-gray-50">
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => navigate(`/my-bookings/${booking.id}`)}
+                            onClick={() => navigate(`/orders/${order.id}`)}
                             className="text-left hover:underline cursor-pointer"
                           >
                             <div className="flex flex-col">
                               <span className="text-sm font-medium text-gray-900">
-                                {attrs.product_name || '—'}
+                                Order #{attrs.order_id || order.id?.slice(0, 8) || '—'}
                               </span>
                               <span className="text-xs text-gray-400">
-                                #{booking.id?.slice(0, 8) || '—'}
+                                {attrs.customer?.email || attrs.customer?.first_name || 'Customer'}
                               </span>
                             </div>
                           </button>
-                        </td>
-                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                          {formatDate(attrs.start_at)}
-                        </td>
-                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                          {formatDate(attrs.end_at)}
                         </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <Badge variant={statusVariant(currentStatus)}>
@@ -234,22 +226,50 @@ const MyBookings = () => {
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
                           {attrs.total_price != null ? `GHS ${parseFloat(attrs.total_price).toFixed(2)}` : '—'}
                         </td>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-xs text-gray-500 hidden lg:table-cell">
+                          {attrs.assigned_to ? (
+                            <div className="flex items-center gap-2">
+                              <Image
+                                src={attrs.assigned_to.avatar}
+                                alt={attrs.assigned_to.first_name || attrs.assigned_to.email || 'Staff'}
+                                className="w-8 h-8 rounded-full object-cover"
+                                fallbackIconSize="w-4 h-4"
+                              />
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium text-gray-900 w-16 truncate">
+                                  {`${attrs.assigned_to.first_name || ''} ${attrs.assigned_to.last_name || ''}`.trim() ||
+                                    attrs.assigned_to.email ||
+                                    'Staff'}
+                                </span>
+                                {attrs.assigned_to.email && (
+                                  <span className="text-[11px] text-gray-500 w-16 truncate">
+                                    {attrs.assigned_to.email}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">Unassigned</span>
+                          )}
+                        </td>
                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => navigate(`/my-bookings/${booking.id}`)}
+                              onClick={() => navigate(`/orders/${order.id}`)}
                               className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
                             </button>
+                           {currentStatus !== 'completed' && currentStatus !== 'cancelled' && (
                             <button
-                              onClick={() => handleActionClick(booking)}
+                              onClick={() => handleActionClick(order)}
                               className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                               title="Actions"
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
+                           )}
                           </div>
                         </td>
                       </tr>
@@ -265,7 +285,7 @@ const MyBookings = () => {
           <div className="mt-4 flex items-center justify-between">
             <div className="text-sm text-gray-700">
               Showing page {meta.current_page || 1} of {totalPages}
-              {meta.total_count && ` (${meta.total_count} total bookings)`}
+              {meta.total_count && ` (${meta.total_count} total orders)`}
             </div>
             <div className="flex gap-2">
               <Button
@@ -286,13 +306,13 @@ const MyBookings = () => {
           </div>
         )}
 
-        {selectedBooking && (
-          <BookingStaffActionModal
+        {selectedOrder && (
+          <OrderAdminActionModal
             open={actionModalOpen}
             onClose={handleModalClose}
-            booking={selectedBooking}
+            order={selectedOrder}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['bookings-staff'] })
+              queryClient.invalidateQueries({ queryKey: ['orders-admin'] })
               handleModalClose()
             }}
           />
@@ -302,4 +322,4 @@ const MyBookings = () => {
   )
 }
 
-export default MyBookings
+export default OrdersAdmin

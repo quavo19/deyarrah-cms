@@ -7,25 +7,28 @@ import PublicRoute from '@/guards/PublicRoute'
 import RoleProtectedRoute from '@/guards/RoleProtectedRoute'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
-import Signup from '@/pages/Signup'
 import OTP from '@/pages/OTP'
 import Dashboard from '@/pages/Dashboard'
 import Users from '@/pages/Users'
+import UserDetail from '@/pages/Users/Detail'
 import Settings from '@/pages/Settings'
 import Inventory from '@/pages/Inventory'
 import NewInventory from '@/pages/Inventory/New'
 import Products from '@/pages/Products'
 import ProductDetail from '@/pages/Products/Detail'
 import Categories from '@/pages/Categories'
+import CategoryDetail from '@/pages/Categories/Detail'
 import Warehouses from '@/pages/Warehouses'
 import NewWarehouse from '@/pages/Warehouses/New'
 import EditWarehouse from '@/pages/Warehouses/Edit'
 import WarehouseDetail from '@/pages/Warehouses/Detail'
 import Downtimes from '@/pages/Downtimes'
 import Contacts from '@/pages/Contacts'
-import BookingsAdmin from '@/pages/Bookings/Admin'
-import BookingDetail from '@/pages/Bookings/Detail'
-import MyBookings from '@/pages/Bookings/MyBookings'
+import OrdersAdmin from '@/pages/Orders/Admin'
+import OrderDetail from '@/pages/Orders/Detail'
+import MyOrders from '@/pages/Orders/MyOrders'
+import Support from '@/pages/Support'
+import SupportDetail from '@/pages/Support/Detail'
 import NotFound from '@/pages/NotFound'
 import ResetPassword from '@/pages/ResetPassword'
 
@@ -56,14 +59,6 @@ function App() {
                 }
               />
               <Route
-                path="/signup"
-                element={
-                  <PublicRoute>
-                    <Signup />
-                  </PublicRoute>
-                }
-              />
-              <Route
                 path="/otp"
                 element={
                   <PublicRoute>
@@ -90,6 +85,7 @@ function App() {
               >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/users" element={<Users />} />
+                <Route path="/users/:id" element={<UserDetail />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route
                   path="/inventory"
@@ -108,10 +104,13 @@ function App() {
                   path="/categories"
                   element={
                     <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                      <Categories />
+                      <Outlet />
                     </RoleProtectedRoute>
                   }
-                />
+                >
+                  <Route index element={<Categories />} />
+                  <Route path=":id" element={<CategoryDetail />} />
+                </Route>
                 <Route
                   path="/spaces"
                   element={
@@ -142,26 +141,37 @@ function App() {
                   }
                 />
                 <Route
-                  path="/bookings"
+                  path="/orders"
                   element={
                     <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
                       <Outlet />
                     </RoleProtectedRoute>
                   }
                 >
-                  <Route index element={<BookingsAdmin />} />
-                  <Route path=":id" element={<BookingDetail />} />
+                  <Route index element={<OrdersAdmin />} />
+                  <Route path=":id" element={<OrderDetail />} />
                 </Route>
                 <Route
-                  path="/my-bookings"
+                  path="/support"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                      <Outlet />
+                    </RoleProtectedRoute>
+                  }
+                >
+                  <Route index element={<Support />} />
+                  <Route path=":id" element={<SupportDetail />} />
+                </Route>
+                <Route
+                  path="/my-orders"
                   element={
                     <RoleProtectedRoute allowedRoles={['STAFF']}>
                       <Outlet />
                     </RoleProtectedRoute>
                   }
                 >
-                  <Route index element={<MyBookings />} />
-                  <Route path=":id" element={<BookingDetail />} />
+                  <Route index element={<MyOrders />} />
+                  <Route path=":id" element={<OrderDetail />} />
                 </Route>
               </Route>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

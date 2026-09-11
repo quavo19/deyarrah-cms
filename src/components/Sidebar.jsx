@@ -54,12 +54,12 @@ const SidebarContent = ({ onNavigate, className }) => {
         <div className="flex items-center gap-2">
           <Image 
             src={logoImage} 
-            alt="Platinum Vault Logo" 
+            alt="Deyarrah CMS Logo" 
             className="h-10 w-auto bg-transparent"
           />
           <div className="flex flex-col">
             <h2 className="text-lg font-semibold text-white tracking-tight">
-              Platinum Vault
+              Deyarrah CMS
             </h2>
             <p className="text-xs text-white/60 font-medium">{formatRoleName(user?.role?.name)}</p>
           </div>

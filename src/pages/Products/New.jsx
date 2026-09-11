@@ -68,8 +68,11 @@ const NewProduct = () => {
     description: '',
     bookable_type: '',
     category_id: '',
+    category_ids: [],
+    sub_category_ids: [],
     active: true,
     delivery_rate_per_km: '',
+    bonus_points: '',
     product_meta: [],
     variant_types: [],
     variant_stocks: [],
@@ -116,7 +119,7 @@ const NewProduct = () => {
     } finally {
       setIsInitialized(true)
     }
-  }, [])
+  }, [toast])
 
   useEffect(() => {
     if (!isInitialized) return
@@ -267,8 +270,11 @@ const NewProduct = () => {
         description: '',
         bookable_type: '',
         category_id: '',
+        category_ids: [],
+        sub_category_ids: [],
         active: true,
         delivery_rate_per_km: '',
+        bonus_points: '',
         product_meta: [],
         variant_types: [],
         variant_stocks: [],
@@ -412,7 +418,11 @@ const NewProduct = () => {
             description: '',
             bookable_type: '',
             category_id: '',
+            category_ids: [],
+            sub_category_ids: [],
             active: true,
+            delivery_rate_per_km: '',
+            bonus_points: '',
             product_meta: [],
             variant_types: [],
             variant_stocks: [],

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
 import { userService } from '@/services/user.service'
@@ -12,7 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import CenterModal from '@/components/ui/CenterModal'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import Image from '@/components/ui/Image'
-import { Edit2, Key, User as UserIcon } from 'lucide-react'
+import { Edit2, Eye, Key, User as UserIcon } from 'lucide-react'
 
 const UsersTab = ({ roles, onEditRole, onEditPermissions }) => {
   const toast = useToast()
@@ -142,7 +142,7 @@ const UsersTab = ({ roles, onEditRole, onEditPermissions }) => {
         />
       </div>
 
-      <div className="bg-white rounded-lg overflow-hidden">
+      <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -162,18 +162,21 @@ const UsersTab = ({ roles, onEditRole, onEditPermissions }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Details
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoadingUsers ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-4">
+                  <td colSpan="6" className="px-6 py-4">
                     <TableSkeleton />
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                     No users found
                   </td>
                 </tr>
@@ -328,6 +331,15 @@ const UserRow = ({ user, onBlockToggle, blockMutationPending, onEditRole, onEdit
           onLabel="Active"
           offLabel="Blocked"
         />
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right">
+        <Link
+          to={`/users/${user.id}`}
+          className="inline-flex items-center justify-center text-gray-600 hover:text-primary transition-colors"
+          title="View user details"
+        >
+          <Eye className="h-4 w-4" />
+        </Link>
       </td>
     </tr>
   )

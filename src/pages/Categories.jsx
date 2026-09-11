@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { MoreVertical, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { categoryService } from '@/services/category.service'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -9,109 +11,106 @@ import Textarea from '@/components/ui/Textarea'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import CenterModal from '@/components/ui/CenterModal'
 import TableSkeleton from '@/components/ui/TableSkeleton'
-import { Plus, Trash2 } from 'lucide-react'
+
+const emptyCategoryForm = { name: '', description: '' }
 
 const Categories = () => {
   const toast = useToast()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [createModalOpen, setCreateModalOpen] = useState(false)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState(null)
-  const [formData, setFormData] = useState({ name: '', description: '' })
+  const [categoryModal, setCategoryModal] = useState({ open: false, category: null })
+  const [deleteModal, setDeleteModal] = useState({ open: false, category: null })
+  const [openActionsId, setOpenActionsId] = useState(null)
+  const [categoryForm, setCategoryForm] = useState(emptyCategoryForm)
   const [formErrors, setFormErrors] = useState({})
 
-  const {
-    data: categoriesData,
-    isLoading,
-  } = useQuery({
+  const { data: categoriesData, isLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryService.getAllCategories,
   })
 
-
-  const categories = categoriesData?.data || []
-  const filteredCategories = categories.filter(category => {
+  const categories = useMemo(() => categoriesData?.data || [], [categoriesData])
+  const filteredCategories = categories.filter((category) => {
     if (!search) return true
     const searchLower = search.toLowerCase()
+
     return (
-      category?.name?.toLowerCase().includes(searchLower) ||
-      category?.description?.toLowerCase().includes(searchLower)
+      category.name?.toLowerCase().includes(searchLower) ||
+      category.description?.toLowerCase().includes(searchLower)
     )
   })
 
-    console.log(categories)
-
-
-  const createMutation = useMutation({
-    mutationFn: categoryService.createCategory,
+  const saveCategoryMutation = useMutation({
+    mutationFn: ({ categoryId, payload }) =>
+      categoryId
+        ? categoryService.updateCategory(categoryId, payload)
+        : categoryService.createCategory(payload),
     onSuccess: () => {
-      toast.success('Category Created', 'Category has been created successfully')
+      toast.success('Category Saved', 'Category has been saved successfully')
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      setCreateModalOpen(false)
-      setFormData({ name: '', description: '' })
+      setCategoryModal({ open: false, category: null })
+      setCategoryForm(emptyCategoryForm)
       setFormErrors({})
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.error || 
-                         error.response?.data?.errors?.[0] ||
-                         'Failed to create category'
-      toast.error('Creation Failed', errorMessage)
-      if (error.response?.data?.errors) {
-        setFormErrors({ name: error.response.data.errors[0] })
-      }
+      toast.error('Creation Failed', error.response?.data?.errors?.[0] || error.response?.data?.error || 'Failed to create category')
     },
   })
 
-  const deleteMutation = useMutation({
+  const deleteCategoryMutation = useMutation({
     mutationFn: categoryService.deleteCategory,
     onSuccess: () => {
       toast.success('Category Deleted', 'Category has been deleted successfully')
       queryClient.invalidateQueries({ queryKey: ['categories'] })
-      setDeleteModalOpen(false)
-      setSelectedCategory(null)
+      setDeleteModal({ open: false, category: null })
+      setOpenActionsId(null)
     },
     onError: (error) => {
-      const errorMessage = error.response?.data?.error || 
-                         'Failed to delete category'
-      toast.error('Deletion Failed', errorMessage)
+      toast.error('Deletion Failed', error.response?.data?.errors?.[0] || error.response?.data?.error || 'Failed to delete category')
     },
   })
 
-  const handleCreate = () => {
+  const openCreateModal = () => {
+    setCategoryForm(emptyCategoryForm)
     setFormErrors({})
-    if (!formData.name.trim()) {
+    setCategoryModal({ open: true, category: null })
+  }
+
+  const openEditModal = (category) => {
+    setCategoryForm({
+      name: category.name || '',
+      description: category.description || '',
+    })
+    setFormErrors({})
+    setCategoryModal({ open: true, category })
+    setOpenActionsId(null)
+  }
+
+  const handleSaveCategory = () => {
+    if (!categoryForm.name.trim()) {
       setFormErrors({ name: 'Name is required' })
       return
     }
-    createMutation.mutate({
-      name: formData.name.trim(),
-      description: formData.description.trim() || undefined,
+
+    saveCategoryMutation.mutate({
+      categoryId: categoryModal.category?.id,
+      payload: {
+        name: categoryForm.name.trim(),
+        description: categoryForm.description.trim() || undefined,
+      },
     })
-  }
-
-  const handleDeleteClick = (category) => {
-    setSelectedCategory(category)
-    setDeleteModalOpen(true)
-  }
-
-  const handleDeleteConfirm = () => {
-    if (selectedCategory) {
-      deleteMutation.mutate(selectedCategory.id)
-    }
   }
 
   return (
     <div className="bg-gray-50 montserrat">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Category Management</h1>
-            <p className="text-gray-600">Manage product categories.</p>
-          </div>
+          <h1 className="text-2xl font-bold">Category Management</h1>
+          <p className="text-gray-600">Manage product categories.</p>
         </div>
 
-        <div className="mb-6 flex items-center gap-4 w-full">
+        <div className="mb-6 flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full">
           <div className="w-full">
             <SearchInput
               value={search}
@@ -119,32 +118,21 @@ const Categories = () => {
               placeholder="Search categories..."
             />
           </div>
-          <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-2 w-full max-w-xs text-sm"
-          >
+          <Button onClick={openCreateModal} className="w-full md:w-auto gap-2 text-sm cursor-pointer">
             <Plus className="w-4 h-4" />
-            Create Category
+            Create
           </Button>
         </div>
 
-        <div className="bg-white rounded-lg overflow-hidden border border-gray-200">
+        <div className="bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th> */}
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subcategories</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -164,30 +152,57 @@ const Categories = () => {
                   filteredCategories.map((category) => (
                     <tr key={category.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {category?.name}
-                        </div>
-                      </td>
-                      {/* <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-md truncate">
-                          {category?.description || '—'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          {category?.created_at
-                            ? new Date(category.attributes.created_at).toLocaleDateString()
-                            : '—'}
-                        </div>
-                      </td> */}
-                      <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => handleDeleteClick(category)}
-                          className="text-red-600 hover:text-red-800 transition-colors"
-                          title="Delete category"
+                          onClick={() => navigate(`/categories/${category.id}`)}
+                          className="cursor-pointer text-left text-sm font-medium text-gray-900 hover:underline"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {category.name}
                         </button>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xl">
+                        <div className="line-clamp-2">{category.description || 'No description'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {category.sub_categories_count || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="relative inline-flex justify-end">
+                          <button
+                            onClick={() => setOpenActionsId(openActionsId === category.id ? null : category.id)}
+                            className="cursor-pointer inline-flex h-8 w-8 items-center justify-center text-gray-600 hover:bg-gray-100"
+                            title="Category actions"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                          {openActionsId === category.id && (
+                            <div className="absolute right-0 top-9 z-20 w-32 bg-white border border-gray-200 py-1 text-left">
+                              <button
+                                onClick={() => {
+                                  navigate(`/categories/${category.id}`)
+                                  setOpenActionsId(null)
+                                }}
+                                className="block w-full cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => openEditModal(category)}
+                                className="block w-full cursor-pointer px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setDeleteModal({ open: true, category })
+                                  setOpenActionsId(null)
+                                }}
+                                className="block w-full cursor-pointer px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -198,23 +213,21 @@ const Categories = () => {
         </div>
 
         <CenterModal
-          open={createModalOpen}
+          open={categoryModal.open}
           onClose={() => {
-            setCreateModalOpen(false)
-            setFormData({ name: '', description: '' })
+            setCategoryModal({ open: false, category: null })
+            setCategoryForm(emptyCategoryForm)
             setFormErrors({})
           }}
-          heading="Create Category"
+          heading={categoryModal.category ? 'Edit Category' : 'Create Category'}
         >
           <div className="space-y-4">
             <Input
               label="Category Name"
-              value={formData.name}
+              value={categoryForm.name}
               onChange={(e) => {
-                setFormData({ ...formData, name: e.target.value })
-                if (formErrors.name) {
-                  setFormErrors({ ...formErrors, name: '' })
-                }
+                setCategoryForm({ ...categoryForm, name: e.target.value })
+                setFormErrors({})
               }}
               error={formErrors.name}
               required
@@ -222,51 +235,31 @@ const Categories = () => {
             />
             <Textarea
               label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              value={categoryForm.description}
+              onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
               placeholder="Optional description for this category"
               rows={3}
             />
             <div className="flex gap-3 justify-end pt-4">
-              <Button
-                type="button"
-                onClick={() => {
-                  setCreateModalOpen(false)
-                  setFormData({ name: '', description: '' })
-                  setFormErrors({})
-                }}
-                className="bg-gray-200! text-gray-700! border-gray-300 hover:bg-gray-50"
-              >
+              <Button onClick={() => setCategoryModal({ open: false, category: null })} className="w-auto bg-gray-200! text-gray-700! border-gray-300 hover:bg-gray-50 cursor-pointer">
                 Cancel
               </Button>
-              <Button
-                type="button"
-                onClick={handleCreate}
-                isLoading={createMutation.isPending}
-                loadingText="Creating..."
-              >
-                Create Category
+              <Button onClick={handleSaveCategory} isLoading={saveCategoryMutation.isPending} loadingText="Saving..." className="w-auto cursor-pointer">
+                {categoryModal.category ? 'Save' : 'Create'}
               </Button>
             </div>
           </div>
         </CenterModal>
 
         <ConfirmModal
-          open={deleteModalOpen}
-          onClose={() => {
-            setDeleteModalOpen(false)
-            setSelectedCategory(null)
-          }}
-          onConfirm={handleDeleteConfirm}
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, category: null })}
+          onConfirm={() => deleteModal.category?.id && deleteCategoryMutation.mutate(deleteModal.category.id)}
           title="Delete Category"
-          description={
-            selectedCategory
-              ? `Are you sure you want to delete "${selectedCategory.attributes?.name}"? This action cannot be undone. Categories with associated products cannot be deleted.`
-              : ''
-          }
+          description={`Are you sure you want to delete "${deleteModal.category?.name || 'this category'}"? This action cannot be undone.`}
           confirmText="Delete"
           variant="danger"
-          isLoading={deleteMutation.isPending}
+          isLoading={deleteCategoryMutation.isPending}
         />
       </div>
     </div>

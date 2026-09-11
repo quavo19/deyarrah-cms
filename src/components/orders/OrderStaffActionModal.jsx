@@ -1,36 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
-import { bookingAdminService } from '@/services/booking.admin.service'
+import { orderAdminService } from '@/services/order.admin.service'
 import ModalSheet from '@/components/ui/ModalSheet'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 
-// Booking status can now only be updated to cancelled or completed
+// Staff can only close out assigned orders.
 const STATUS_OPTIONS = [
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const BookingStaffActionModal = ({ open, onClose, booking, onSuccess }) => {
+const OrderStaffActionModal = ({ open, onClose, order, onSuccess }) => {
   const toast = useToast()
-  const attrs = booking?.attributes || {}
+  const attrs = order?.attributes || {}
   const [status, setStatus] = useState(attrs.status || '')
 
   useEffect(() => {
-    if (open && booking) {
-      setStatus(attrs.status || '')
+    if (open && order) {
+      startTransition(() => {
+        setStatus(attrs.status || '')
+      })
     }
-  }, [open, booking, attrs.status])
+  }, [open, order, attrs.status])
 
   const updateMutation = useMutation({
-    mutationFn: (payload) => bookingAdminService.update(booking.id, payload),
+    mutationFn: (payload) => orderAdminService.update(order.id, payload),
     onSuccess: () => {
-      toast.success('Booking Updated', 'Booking status has been updated successfully')
+      toast.success('Order Updated', 'Order status has been updated successfully')
       onSuccess()
     },
     onError: (error) => {
-      const msg = error.response?.data?.error || 'Failed to update booking'
+      const msg = error.response?.data?.error || 'Failed to update order'
       toast.error('Update Failed', msg)
     },
   })
@@ -53,8 +55,8 @@ const BookingStaffActionModal = ({ open, onClose, booking, onSuccess }) => {
     <ModalSheet
       open={open}
       onOpenChange={onClose}
-      heading="Update Booking Status"
-      description={`Booking #${booking?.id?.slice(0, 8) || ''} - ${attrs.product_name || ''}`}
+      heading="Update Order Status"
+      description={`Order #${attrs.order_id || order?.id?.slice(0, 8) || ''}`}
       side="right"
       primaryButton={{
         text: 'Save Changes',
@@ -87,4 +89,4 @@ const BookingStaffActionModal = ({ open, onClose, booking, onSuccess }) => {
   )
 }
 
-export default BookingStaffActionModal
+export default OrderStaffActionModal

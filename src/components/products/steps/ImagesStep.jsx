@@ -239,7 +239,7 @@ const ImagesStep = ({ formData, errors, onChange }) => {
                       handleImageChange(index, 'url', e.target.value)
                     }
                   }}
-                  placeholder="https://example.com/image.jpg"
+                  placeholder="https://image-url.local/image.jpg"
                   error={errors[`image_${index}_url`]}
                   disabled={!!image.file}
                 />

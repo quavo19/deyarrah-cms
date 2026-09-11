@@ -1,8 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "platinumvault-cms",
-      cwd: "/home/terminal_ideas/platinumvault-cms",
+      name: "deyarrah-cms",
+      cwd: "/home/terminal_ideas/deyarrah-cms",
       script: "./node_modules/.bin/vite",
       args: "preview --port 3002 --host 0.0.0.0",
       interpreter: "/home/terminal_ideas/.nvm/versions/node/v20.19.5/bin/node",
@@ -12,11 +12,10 @@ module.exports = {
       env: {
         NODE_ENV: "production",
       },
-      error_file: "/home/terminal_ideas/.pm2/logs/platinumvault-cms-error.log",
-      out_file: "/home/terminal_ideas/.pm2/logs/platinumvault-cms-out.log",
+      error_file: "/home/terminal_ideas/.pm2/logs/deyarrah-cms-error.log",
+      out_file: "/home/terminal_ideas/.pm2/logs/deyarrah-cms-out.log",
       merge_logs: true,
       time: true,
     },
   ],
 };
-

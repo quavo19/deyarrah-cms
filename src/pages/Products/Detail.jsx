@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
@@ -7,7 +7,6 @@ import { categoryService } from '@/services/category.service'
 import BackButton from '@/components/ui/BackButton'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
-import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import TableSkeleton from '@/components/ui/TableSkeleton'
@@ -17,7 +16,7 @@ import ProductVariantsSection from '@/components/products/ProductVariantsSection
 import ProductMetaSection from '@/components/products/ProductMetaSection'
 import ProductVariantStocksSection from '@/components/products/ProductVariantStocksSection'
 import ProductImagesSection from '@/components/products/ProductImagesSection'
-import { Trash2, X, Package, Tag, FileText, Grid3x3, Settings, Truck } from 'lucide-react'
+import { Trash2, X, Package, Tag, FileText, Grid3x3, Settings, Truck, Star } from 'lucide-react'
 
 const ProductDetail = () => {
   const toast = useToast()
@@ -25,13 +24,17 @@ const ProductDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [reviewDeleteModal, setReviewDeleteModal] = useState({ open: false, review: null })
   const [isEditingProduct, setIsEditingProduct] = useState(false)
   const [editFormData, setEditFormData] = useState({
     name: '',
     description: '',
     active: true,
     category_id: '',
+    category_ids: [],
+    sub_category_ids: [],
     delivery_rate_per_km: '',
+    bonus_points: '',
   })
 
   const {
@@ -45,21 +48,43 @@ const ProductDetail = () => {
 
   const product = productData?.data
   const attrs = product?.attributes || {}
+  const reviews = attrs.reviews || []
+  const reviewSummary = attrs.review_summary || {}
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
     queryFn: categoryService.getAllCategories,
   })
 
-  const categoryOptions = categoriesData?.data
-    ? [
-        { value: '', label: 'Select a category' },
-        ...categoriesData.data.map((category) => ({
-          value: category.id,
-          label: category.attributes?.name || category.id,
-        })),
-      ]
-    : [{ value: '', label: 'Loading categories...' }]
+  const { data: subCategoriesData } = useQuery({
+    queryKey: ['sub_categories'],
+    queryFn: () => categoryService.getAllSubCategories(),
+  })
+
+  const categoryOptions = (categoriesData?.data || []).map((category) => ({
+    value: category.id,
+    label: category.name || category.id,
+  }))
+
+  const selectedCategoryIds = useMemo(
+    () => editFormData.category_ids || [],
+    [editFormData.category_ids]
+  )
+  const selectedSubCategoryIds = useMemo(
+    () => editFormData.sub_category_ids || [],
+    [editFormData.sub_category_ids]
+  )
+
+  const subCategoryOptions = useMemo(() => {
+    const selected = new Set(selectedCategoryIds)
+
+    return (subCategoriesData?.data || [])
+      .filter((subCategory) => selected.has(subCategory.category_id))
+      .map((subCategory) => ({
+        value: subCategory.id,
+        label: `${subCategory.name} (${subCategory.category?.name || 'Category'})`,
+      }))
+  }, [selectedCategoryIds, subCategoriesData])
 
 
   const deleteMutation = useMutation({
@@ -91,10 +116,29 @@ const ProductDetail = () => {
     },
   })
 
+  const deleteReviewMutation = useMutation({
+    mutationFn: (reviewId) => productService.deleteReview(id, reviewId),
+    onSuccess: () => {
+      toast.success('Review Deleted', 'Review has been deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['product', id] })
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      setReviewDeleteModal({ open: false, review: null })
+    },
+    onError: (error) => {
+      toast.error('Delete Failed', error.response?.data?.error || 'Failed to delete review')
+    },
+  })
+
 
   const handleDelete = () => {
     if (product) {
       deleteMutation.mutate(product.id)
+    }
+  }
+
+  const handleDeleteReview = () => {
+    if (reviewDeleteModal.review?.id) {
+      deleteReviewMutation.mutate(reviewDeleteModal.review.id)
     }
   }
 
@@ -104,7 +148,10 @@ const ProductDetail = () => {
       description: attrs.description || '',
       active: attrs.active !== false,
       category_id: attrs.category_id || attrs.category?.id || '',
+      category_ids: attrs.category_ids || attrs.categories?.map((category) => category.id) || [],
+      sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
+      bonus_points: attrs.bonus_points ?? '',
     })
     setIsEditingProduct(true)
   }
@@ -116,7 +163,10 @@ const ProductDetail = () => {
       description: attrs.description || '',
       active: attrs.active !== false,
       category_id: attrs.category_id || attrs.category?.id || '',
+      category_ids: attrs.category_ids || attrs.categories?.map((category) => category.id) || [],
+      sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
+      bonus_points: attrs.bonus_points ?? '',
     })
   }
 
@@ -130,8 +180,11 @@ const ProductDetail = () => {
       name: editFormData.name,
       description: editFormData.description || '',
       active: editFormData.active,
-      category_id: editFormData.category_id || null,
+      category_id: editFormData.category_ids?.[0] || editFormData.category_id || null,
+      category_ids: editFormData.category_ids || [],
+      sub_category_ids: editFormData.sub_category_ids || [],
       delivery_rate_per_km: editFormData.delivery_rate_per_km || null,
+      bonus_points: Number(editFormData.bonus_points || 0),
     })
   }
 
@@ -148,6 +201,31 @@ const ProductDetail = () => {
       ...prev,
       active: value
     }))
+  }
+
+  const toggleArrayValue = (name, value) => {
+    setEditFormData((prev) => {
+      const currentValues = prev[name] || []
+      const nextValues = currentValues.includes(value)
+        ? currentValues.filter((item) => item !== value)
+        : [...currentValues, value]
+
+      if (name !== 'category_ids') {
+        return { ...prev, [name]: nextValues }
+      }
+
+      const selectedCategories = new Set(nextValues)
+      const allowedSubCategoryIds = (subCategoriesData?.data || [])
+        .filter((subCategory) => selectedCategories.has(subCategory.category_id))
+        .map((subCategory) => subCategory.id)
+
+      return {
+        ...prev,
+        category_id: nextValues[0] || '',
+        category_ids: nextValues,
+        sub_category_ids: (prev.sub_category_ids || []).filter((id) => allowedSubCategoryIds.includes(id)),
+      }
+    })
   }
 
   if (isLoading) {
@@ -271,13 +349,19 @@ const ProductDetail = () => {
                       rows={2}
                       textareaClassName=" py-[5px]! text-sm rounded-lg!"
                     />
-                    <Select
-                      label="Category"
-                      name="category_id"
-                      value={editFormData.category_id}
-                      onChange={handleEditFormChange}
+                    <MultiChoice
+                      label="Categories"
                       options={categoryOptions}
-                      selectClassName=" py-[5px]! text-sm rounded-lg!"
+                      selectedValues={selectedCategoryIds}
+                      onToggle={(value) => toggleArrayValue('category_ids', value)}
+                      emptyText="No categories found"
+                    />
+                    <MultiChoice
+                      label="Subcategories"
+                      options={subCategoryOptions}
+                      selectedValues={selectedSubCategoryIds}
+                      onToggle={(value) => toggleArrayValue('sub_category_ids', value)}
+                      emptyText={selectedCategoryIds.length === 0 ? 'Select categories first' : 'No subcategories found'}
                     />
                     <SlideToggle
                       label="Active Status"
@@ -295,6 +379,17 @@ const ProductDetail = () => {
                       value={editFormData.delivery_rate_per_km || ''}
                       onChange={handleEditFormChange}
                       placeholder="0.00"
+                      inputClassName=" py-[5px]! text-sm rounded-lg!"
+                    />
+                    <Input
+                      label="Bonus Points"
+                      name="bonus_points"
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={editFormData.bonus_points || ''}
+                      onChange={handleEditFormChange}
+                      placeholder="0"
                       inputClassName=" py-[5px]! text-sm rounded-lg!"
                     />
                 </div>
@@ -315,8 +410,17 @@ const ProductDetail = () => {
                     <Grid3x3 className="w-4 h-4 text-gray-600" />
                   </div>
                   <div className="flex-1">
-                    <dt className="text-sm font-light text-gray-500 mb-1">Category</dt>
-                    <dd className="text-sm text-gray-900 font-light">{attrs.category?.name || '—'}</dd>
+                    <dt className="text-sm font-light text-gray-500 mb-1">Categories</dt>
+                    <dd className="text-sm text-gray-900 font-light">
+                      {(attrs.categories || []).length > 0
+                        ? attrs.categories.map((category) => category.name).join(', ')
+                        : attrs.category?.name || '—'}
+                    </dd>
+                    {(attrs.sub_categories || []).length > 0 && (
+                      <dd className="text-xs text-gray-500 mt-2">
+                        Subcategories: {attrs.sub_categories.map((subCategory) => subCategory.name).join(', ')}
+                      </dd>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -327,8 +431,19 @@ const ProductDetail = () => {
                     <dt className="text-sm font-light text-gray-500 mb-1">Type</dt>
                     <dd className="mt-1">
                       <Badge variant={attrs.bookable_type === 'bulk' ? 'info' : 'success'}>
-                        {attrs.bookable_type || '—'}
+                        {attrs.bookable_type ? attrs.bookable_type.replace('_', ' ') : '—'}
                       </Badge>
+                    </dd>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
+                    <Star className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <dt className="text-sm font-light text-gray-500 mb-1">Bonus Points</dt>
+                    <dd className="text-sm text-gray-900 font-light">
+                      #{Number(attrs.bonus_points || 0).toLocaleString()}
                     </dd>
                   </div>
                 </div>
@@ -342,6 +457,20 @@ const ProductDetail = () => {
                       <Badge variant={attrs.active ? 'success' : 'still'}>
                         {attrs.active ? 'Active' : 'Inactive'}
                       </Badge>
+                    </dd>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
+                    <Tag className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <dt className="text-sm font-light text-gray-500 mb-1">Cart / Wishlist</dt>
+                    <dd className="text-sm text-gray-900 font-light">
+                      {attrs.cart_count || 0} in cart
+                    </dd>
+                    <dd className="text-xs text-gray-500 mt-1">
+                      {attrs.wishlist_count || 0} wishlisted
                     </dd>
                   </div>
                 </div>
@@ -376,6 +505,69 @@ const ProductDetail = () => {
            <ProductImagesSection productId={id} images={attrs.images || []} />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-50 rounded-lg">
+                  <Star className="w-5 h-5 text-gray-600" />
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-base font-semibold text-gray-900">Reviews</h2>
+                  <p className="text-sm text-gray-500">
+                    {reviewSummary.total_reviews || 0} total reviews
+                  </p>
+                </div>
+              </div>
+              <Badge variant={Number(reviewSummary.average_points) > 0 ? 'success' : 'still'}>
+                {Number(reviewSummary.average_points || 0).toFixed(1)} / 5
+              </Badge>
+            </div>
+            <div className="bg-white p-4 sm:p-6 rounded-lg border-gray-200">
+              {reviews.length === 0 ? (
+                <p className="text-sm text-gray-500">No reviews yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => {
+                    const user = review.user || {}
+                    const displayName =
+                      `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+                      user.email ||
+                      'Customer'
+
+                    return (
+                      <div key={review.id} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{displayName}</p>
+                            <p className="text-xs text-gray-500">
+                              {review.created_at ? new Date(review.created_at).toLocaleDateString() : '—'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                              {review.points} / 5
+                            </div>
+                            <button
+                              onClick={() => setReviewDeleteModal({ open: true, review })}
+                              className="text-red-600 hover:text-red-800 transition-colors"
+                              title="Delete review"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-sm text-gray-700 mt-3 leading-relaxed">{review.comment}</p>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
           <ProductVariantsSection productId={id} bookableType={attrs.bookable_type} />
 
           <ProductMetaSection productId={id} />
@@ -393,9 +585,44 @@ const ProductDetail = () => {
           variant="danger"
           isLoading={deleteMutation.isPending}
         />
+        <ConfirmModal
+          open={reviewDeleteModal.open}
+          onClose={() => setReviewDeleteModal({ open: false, review: null })}
+          onConfirm={handleDeleteReview}
+          title="Delete Review"
+          description="Are you sure you want to delete this review? This action cannot be undone."
+          confirmText="Delete"
+          variant="danger"
+          isLoading={deleteReviewMutation.isPending}
+        />
       </div>
     </div>
   )
 }
+
+const MultiChoice = ({ label, options, selectedValues, onToggle, emptyText }) => (
+  <div>
+    <div className="block text-sm font-medium mb-2 text-gray-700">{label}</div>
+    <div className="border border-gray-200 rounded-lg p-3 min-h-12">
+      {options.length === 0 ? (
+        <div className="text-sm text-gray-500">{emptyText}</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {options.map((option) => (
+            <label key={option.value} className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={selectedValues.includes(option.value)}
+                onChange={() => onToggle(option.value)}
+                className="h-4 w-4 accent-primary"
+              />
+              <span>{option.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)
 
 export default ProductDetail

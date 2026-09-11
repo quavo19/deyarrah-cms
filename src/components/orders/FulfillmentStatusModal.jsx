@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, startTransition } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
-import { bookingAdminService } from '@/services/booking.admin.service'
+import { orderAdminService } from '@/services/order.admin.service'
 import ModalSheet from '@/components/ui/ModalSheet'
 import Select from '@/components/ui/Select'
 
@@ -12,7 +12,7 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const FulfillmentStatusModal = ({ open, onClose, fulfillment, bookingId, onSuccess }) => {
+const FulfillmentStatusModal = ({ open, onClose, fulfillment, orderId, onSuccess }) => {
   const toast = useToast()
   const fulfillmentAttrs = fulfillment?.attributes || {}
   const [status, setStatus] = useState('')
@@ -33,7 +33,7 @@ const FulfillmentStatusModal = ({ open, onClose, fulfillment, bookingId, onSucce
   }, [open, fulfillment, fulfillmentAttrs.status])
 
   const updateMutation = useMutation({
-    mutationFn: (payload) => bookingAdminService.update(bookingId, payload),
+    mutationFn: (payload) => orderAdminService.update(orderId, payload),
     onSuccess: () => {
       toast.success('Fulfillment Updated', 'Fulfillment status has been updated successfully')
       onSuccess()

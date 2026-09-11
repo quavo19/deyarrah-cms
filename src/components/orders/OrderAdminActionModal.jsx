@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, startTransition } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
-import { bookingAdminService } from '@/services/booking.admin.service'
+import { orderAdminService } from '@/services/order.admin.service'
 import { userService } from '@/services/user.service'
 import ModalSheet from '@/components/ui/ModalSheet'
 import Select from '@/components/ui/Select'
@@ -16,13 +16,13 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const BookingAdminActionModal = ({ open, onClose, booking, onSuccess }) => {
+const OrderAdminActionModal = ({ open, onClose, order, onSuccess }) => {
   const toast = useToast()
-  const attrs = booking?.attributes || {}
+  const attrs = order?.attributes || {}
   const [status, setStatus] = useState('')
   const [assignedToId, setAssignedToId] = useState('')
   const [staffSearch, setStaffSearch] = useState('')
-  const previousBookingIdRef = useRef(null)
+  const previousOrderIdRef = useRef(null)
 
   const { data: staffData, isLoading: isLoadingStaff } = useQuery({
     queryKey: ['staff-users', staffSearch],
@@ -40,31 +40,31 @@ const BookingAdminActionModal = ({ open, onClose, booking, onSuccess }) => {
   ]
 
   useEffect(() => {
-    if (open && booking && booking.id !== previousBookingIdRef.current) {
-      previousBookingIdRef.current = booking.id
+    if (open && order && order.id !== previousOrderIdRef.current) {
+      previousOrderIdRef.current = order.id
       startTransition(() => {
         setStatus(attrs.status || '')
         setAssignedToId(attrs.assigned_to?.id || '')
         setStaffSearch('')
       })
     } else if (!open) {
-      previousBookingIdRef.current = null
+      previousOrderIdRef.current = null
       startTransition(() => {
         setStatus('')
         setAssignedToId('')
         setStaffSearch('')
       })
     }
-  }, [open, booking, attrs.status, attrs.assigned_to?.id])
+  }, [open, order, attrs.status, attrs.assigned_to?.id])
 
   const updateMutation = useMutation({
-    mutationFn: (payload) => bookingAdminService.update(booking.id, payload),
+    mutationFn: (payload) => orderAdminService.update(order.id, payload),
     onSuccess: () => {
-      toast.success('Booking Updated', 'Booking has been updated successfully')
+      toast.success('Order Updated', 'Order has been updated successfully')
       onSuccess()
     },
     onError: (error) => {
-      const msg = error.response?.data?.error || 'Failed to update booking'
+      const msg = error.response?.data?.error || 'Failed to update order'
       toast.error('Update Failed', msg)
     },
   })
@@ -90,8 +90,8 @@ const BookingAdminActionModal = ({ open, onClose, booking, onSuccess }) => {
     <ModalSheet
       open={open}
       onOpenChange={onClose}
-      heading="Manage Booking"
-      description={`Booking #${booking?.id?.slice(0, 8) || ''} - ${attrs.product_name || ''}`}
+      heading="Manage Order"
+      description={`Order #${attrs.order_id || order?.id?.slice(0, 8) || ''}`}
       side="right"
       primaryButton={{
         text: 'Save Changes',
@@ -146,4 +146,4 @@ const BookingAdminActionModal = ({ open, onClose, booking, onSuccess }) => {
   )
 }
 
-export default BookingAdminActionModal
+export default OrderAdminActionModal

@@ -20,13 +20,21 @@ export const validateProductInfo = (data) => {
   }
 
   if (!data.bookable_type) {
-    errors.bookable_type = 'Bookable type is required'
+    errors.bookable_type = 'Product type is required'
   } else if (!['bulk', 'unit'].includes(data.bookable_type)) {
-    errors.bookable_type = 'Bookable type must be either "bulk" or "unit"'
+    errors.bookable_type = 'Product type must be either "bulk" or "unit"'
   }
 
-  if (!data.category_id || data.category_id.trim() === '') {
-    errors.category_id = 'Category is required'
+  const categoryIds = data.category_ids || (data.category_id ? [data.category_id] : [])
+  if (categoryIds.length === 0) {
+    errors.category_ids = 'At least one category is required'
+  }
+
+  if (data.bonus_points !== undefined && data.bonus_points !== null && data.bonus_points !== '') {
+    const bonusPoints = Number(data.bonus_points)
+    if (!Number.isInteger(bonusPoints) || bonusPoints < 0) {
+      errors.bonus_points = 'Bonus points must be a whole number 0 or greater'
+    }
   }
 
   return {
