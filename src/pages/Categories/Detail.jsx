@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, MoreVertical, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { categoryService } from '@/services/category.service'
+import { uploadImageToStorage } from '@/utils/storage'
 import Button from '@/components/ui/Button'
 import CenterModal from '@/components/ui/CenterModal'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -11,7 +12,7 @@ import Input from '@/components/ui/Input'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import Textarea from '@/components/ui/Textarea'
 
-const emptySubCategoryForm = { name: '', description: '' }
+const emptySubCategoryForm = { name: '', description: '', image_url: '', image_storage_key: '', image_file: null }
 
 const CategoryDetail = () => {
   const { id } = useParams()
@@ -76,16 +77,33 @@ const CategoryDetail = () => {
     setFormData({
       name: subCategory.name || '',
       description: subCategory.description || '',
+      image_url: subCategory.image_url || '',
+      image_storage_key: subCategory.image_storage_key || '',
+      image_file: null,
     })
     setFormErrors({})
     setSubCategoryModal({ open: true, subCategory })
     setOpenActionsId(null)
   }
 
-  const handleSaveSubCategory = () => {
+  const handleSaveSubCategory = async () => {
     if (!formData.name.trim()) {
       setFormErrors({ name: 'Name is required' })
       return
+    }
+
+    let imageUrl = formData.image_url
+    let imageStorageKey = formData.image_storage_key
+
+    if (formData.image_file) {
+      try {
+        const uploaded = await uploadImageToStorage(formData.image_file)
+        imageUrl = uploaded.url
+        imageStorageKey = uploaded.storage_key
+      } catch (error) {
+        toast.error('Upload Failed', error.message || 'Failed to upload subcategory image')
+        return
+      }
     }
 
     saveSubCategoryMutation.mutate({
@@ -94,6 +112,8 @@ const CategoryDetail = () => {
         category_id: id,
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
+        image_url: imageUrl || null,
+        image_storage_key: imageStorageKey || null,
       },
     })
   }
@@ -165,7 +185,12 @@ const CategoryDetail = () => {
                   subCategories.map((subCategory) => (
                     <tr key={subCategory.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {subCategory.name}
+                        <div className="flex items-center gap-3">
+                          {subCategory.image_url && (
+                            <img src={subCategory.image_url} alt="" className="h-10 w-10 rounded object-cover bg-gray-100" />
+                          )}
+                          <span>{subCategory.name}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 max-w-xl">
                         <div className="line-clamp-2">{subCategory.description || 'No description'}</div>
@@ -245,6 +270,18 @@ const CategoryDetail = () => {
               placeholder="Optional description for this subcategory"
               rows={3}
             />
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">Subcategory Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFormData({ ...formData, image_file: e.target.files?.[0] || null })}
+                className="block w-full text-sm text-gray-700"
+              />
+              {formData.image_url && !formData.image_file && (
+                <img src={formData.image_url} alt="" className="mt-3 h-24 w-24 rounded object-cover bg-gray-100" />
+              )}
+            </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button
                 onClick={() => setSubCategoryModal({ open: false, subCategory: null })}

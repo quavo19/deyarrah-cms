@@ -4,7 +4,7 @@ import LocationPicker from './LocationPicker'
 import WarehouseImageUpload from './WarehouseImageUpload'
 import { MapPin } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import { uploadToCloudinary } from '@/utils/cloudinary'
+import { uploadImageToStorage } from '@/utils/storage'
 
 const WarehouseForm = ({ 
   initialData = null, 
@@ -18,6 +18,7 @@ const WarehouseForm = ({
       // Get first image URL from images array if available, otherwise fall back to image_url
       const images = initialData.attributes?.images || []
       const firstImageUrl = images.length > 0 ? images[0].url : ''
+      const firstImageStorageKey = images.length > 0 ? images[0].storage_key : ''
       const imageUrl = firstImageUrl || initialData.attributes?.image_url || ''
       
       return {
@@ -25,6 +26,7 @@ const WarehouseForm = ({
         latitude: initialData.attributes?.latitude?.toString() || '',
         longitude: initialData.attributes?.longitude?.toString() || '',
         image_url: imageUrl,
+        image_storage_key: firstImageStorageKey || initialData.attributes?.image_storage_key || '',
       }
     }
     return {
@@ -32,6 +34,7 @@ const WarehouseForm = ({
       latitude: '',
       longitude: '',
       image_url: '',
+      image_storage_key: '',
     }
   }, [initialData])
 
@@ -59,17 +62,19 @@ const WarehouseForm = ({
     }))
   }
 
-  const handleImageUploaded = (url) => {
+  const handleImageUploaded = (uploaded) => {
     setFormData(prev => ({
       ...prev,
-      image_url: url
+      image_url: uploaded.url,
+      image_storage_key: uploaded.storage_key || '',
     }))
   }
 
   const handleImageRemoved = () => {
     setFormData(prev => ({
       ...prev,
-      image_url: ''
+      image_url: '',
+      image_storage_key: '',
     }))
   }
 
@@ -79,14 +84,15 @@ const WarehouseForm = ({
       setIsUploadingImage(true)
       try {
         const file = imageUploadRef.current.getFile()
-        const url = await uploadToCloudinary(file)
-        setFormData(prev => ({ ...prev, image_url: url }))
+        const uploaded = await uploadImageToStorage(file)
+        setFormData(prev => ({ ...prev, image_url: uploaded.url, image_storage_key: uploaded.storage_key }))
         setIsUploadingImage(false)
                 const submitData = {
           name: formData.name.trim(),
           latitude: parseFloat(formData.latitude),
           longitude: parseFloat(formData.longitude),
-          image_url: url,
+          image_url: uploaded.url,
+          image_storage_key: uploaded.storage_key,
         }
         onSubmit(submitData)
       } catch (error) {
@@ -108,6 +114,7 @@ const WarehouseForm = ({
 
       if (formData.image_url !== undefined && formData.image_url !== null && formData.image_url !== '') {
         submitData.image_url = formData.image_url
+        submitData.image_storage_key = formData.image_storage_key || null
       }
 
       onSubmit(submitData)

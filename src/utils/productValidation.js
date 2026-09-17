@@ -37,6 +37,28 @@ export const validateProductInfo = (data) => {
     }
   }
 
+  const shippingType = data.shipping_type || 'bulk'
+  if (!['bulk', 'high_value'].includes(shippingType)) {
+    errors.shipping_type = 'Shipping type must be bulk or high-value'
+  }
+
+  if (shippingType === 'bulk') {
+    if (data.weight_kg !== undefined && data.weight_kg !== null && data.weight_kg !== '') {
+      const weight = Number(data.weight_kg)
+      if (Number.isNaN(weight) || weight < 0) {
+        errors.weight_kg = 'Weight must be 0 or greater'
+      }
+    }
+
+    if (!data.weight_kg && !data.weight_class) {
+      errors.weight_class = 'Choose a weight class or enter exact weight'
+    }
+  }
+
+  if (shippingType === 'high_value' && !String(data.shipping_category || '').trim()) {
+    errors.shipping_category = 'Shipping category is required for high-value products'
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors

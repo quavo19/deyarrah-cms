@@ -1,6 +1,6 @@
 import { api } from '@/api/client'
 import { ENDPOINTS } from '@/constants/endpoints'
-import { uploadToCloudinary } from '@/utils/cloudinary'
+import { uploadImageToStorage } from '@/utils/storage'
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -44,7 +44,17 @@ export const productService = {
           category_ids: productData.category_ids || (productData.category_id ? [productData.category_id] : []),
           sub_category_ids: productData.sub_category_ids || [],
           delivery_rate_per_km: productData.delivery_rate_per_km || null,
-          bonus_points: productData.bonus_points || 0
+          bonus_points: productData.bonus_points || 0,
+          shipping_type: productData.shipping_type || 'bulk',
+          weight_kg: productData.weight_kg || null,
+          weight_class: productData.weight_class || null,
+          shipping_category: productData.shipping_category || null,
+          search_keywords: Array.isArray(productData.search_keywords)
+            ? productData.search_keywords
+            : String(productData.search_keywords || '')
+                .split(',')
+                .map((keyword) => keyword.trim())
+                .filter(Boolean)
         }
       })
 
@@ -321,11 +331,14 @@ export const productService = {
         for (let i = 0; i < totalImages; i++) {
           const image = productData.images[i]
           let imageUrl = image.url
+          let storageKey = image.storage_key
 
           if (image.file) {
             try {
-              progress(5, `Uploading image ${i + 1} of ${totalImages} to Cloudinary...`)
-              imageUrl = await uploadToCloudinary(image.file)
+              progress(5, `Uploading image ${i + 1} of ${totalImages}...`)
+              const uploaded = await uploadImageToStorage(image.file)
+              imageUrl = uploaded.url
+              storageKey = uploaded.storage_key
             } catch (error) {
               throw new Error(`Failed to upload image ${i + 1}: ${error.message}`)
             }
@@ -362,7 +375,8 @@ export const productService = {
             owner_type: image.owner_type || 'Product',
             owner_id: ownerId,
             variant_id: variantId,
-            url: imageUrl
+            url: imageUrl,
+            storage_key: storageKey
           })
         }
 
@@ -379,7 +393,8 @@ export const productService = {
               ENDPOINTS.PRODUCTS.VARIANTS.OPTIONS.IMAGES.CREATE(imageData.variant_id, imageData.owner_id),
               {
                 image: {
-                  url: imageData.url
+                  url: imageData.url,
+                  storage_key: imageData.storage_key
                 }
               }
             )
@@ -390,7 +405,8 @@ export const productService = {
                 image: {
                   owner_type: imageData.owner_type,
                   owner_id: imageData.owner_id,
-                  url: imageData.url
+                  url: imageData.url,
+                  storage_key: imageData.storage_key
                 }
               }
             )
@@ -643,11 +659,10 @@ export const productService = {
     return response.data
   },
 
-  createProductImage: async (productId, imageUrl) => {
+  createProductImage: async (productId, imageData) => {
+    const payload = typeof imageData === 'string' ? { url: imageData } : imageData
     const response = await api.post(ENDPOINTS.PRODUCTS.IMAGES.CREATE(productId), {
-      image: {
-        url: imageUrl
-      }
+      image: payload
     })
     return response.data
   },
@@ -664,11 +679,10 @@ export const productService = {
     return response.data
   },
 
-  createVariantOptionImage: async (variantId, optionId, imageUrl) => {
+  createVariantOptionImage: async (variantId, optionId, imageData) => {
+    const payload = typeof imageData === 'string' ? { url: imageData } : imageData
     const response = await api.post(ENDPOINTS.PRODUCTS.VARIANTS.OPTIONS.IMAGES.CREATE(variantId, optionId), {
-      image: {
-        url: imageUrl
-      }
+      image: payload
     })
     return response.data
   },

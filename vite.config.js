@@ -15,6 +15,8 @@ export default defineConfig({
   server: {
     // Only needed for dev, but preview respects this too
     host: '0.0.0.0',
+    port: 3001,
+    strictPort: true,
     allowedHosts: ['localhost'],
   },
 })

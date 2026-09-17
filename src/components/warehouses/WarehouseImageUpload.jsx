@@ -1,7 +1,7 @@
 import { useState, useRef, useImperativeHandle, forwardRef } from 'react'
 import { Image as ImageIcon, Upload, X, Check } from 'lucide-react'
 import Button from '@/components/ui/Button'
-import { uploadToCloudinary } from '@/utils/cloudinary'
+import { uploadImageToStorage } from '@/utils/storage'
 
 const WarehouseImageUpload = forwardRef(({ 
   imageUrl, 
@@ -48,8 +48,8 @@ const WarehouseImageUpload = forwardRef(({
     setError(null)
 
     try {
-      const url = await uploadToCloudinary(selectedFile)
-      setUploadedUrl(url)
+      const uploaded = await uploadImageToStorage(selectedFile)
+      setUploadedUrl(uploaded.url)
       setSelectedFile(null)
       
       // Clean up preview
@@ -59,7 +59,7 @@ const WarehouseImageUpload = forwardRef(({
       }
 
       if (onImageUploaded) {
-        onImageUploaded(url)
+        onImageUploaded(uploaded)
       }
     } catch (err) {
       console.error('Upload error:', err)
@@ -131,7 +131,7 @@ const WarehouseImageUpload = forwardRef(({
           </span>
         </label>
         <p className="text-xs text-gray-500 mt-1">
-          Select an image file (max 10MB). {autoUpload ? 'Image will be uploaded automatically when you submit the form.' : 'Click "Upload" to process with Cloudinary.'}
+          Select an image file (max 10MB). {autoUpload ? 'Image will be uploaded automatically when you submit the form.' : 'Click "Upload" to process it.'}
         </p>
       </div>
 
@@ -146,7 +146,7 @@ const WarehouseImageUpload = forwardRef(({
           className="w-full"
         >
           <Upload className="w-4 h-4 mr-2" />
-          Upload to Cloudinary
+          Upload Image
         </Button>
       )}
 
@@ -194,7 +194,7 @@ const WarehouseImageUpload = forwardRef(({
       {!displayUrl && !autoUpload && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-xs text-blue-800">
-            <strong>Note:</strong> Images are only uploaded to Cloudinary when you click the "Upload" button. 
+            <strong>Note:</strong> Images are only uploaded when you click the "Upload" button. 
             You can select a file, review it, and then upload when ready.
           </p>
         </div>

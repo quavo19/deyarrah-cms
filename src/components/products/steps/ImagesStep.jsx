@@ -225,7 +225,7 @@ const ImagesStep = ({ formData, errors, onChange }) => {
                   </div>
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
-                  Images will be uploaded to Cloudinary when you submit the form
+                  Images will be uploaded when you submit the form
                 </p>
               </div>
 
@@ -298,7 +298,7 @@ const ImagesStep = ({ formData, errors, onChange }) => {
           {formData.bookable_type === 'bulk'
             ? 'You can attach images to the product or specific variant options. '
             : 'You can attach images to the product. '}
-          Images will be uploaded to Cloudinary when you submit the form.
+          Images will be uploaded when you submit the form.
         </p>
       </div>
     </div>

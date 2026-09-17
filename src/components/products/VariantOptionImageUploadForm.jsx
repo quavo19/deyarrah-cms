@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/useToast'
 import { productService } from '@/services/product.service'
-import { uploadToCloudinary } from '@/utils/cloudinary'
+import { uploadImageToStorage } from '@/utils/storage'
 import Button from '@/components/ui/Button'
 import { X, Upload, Trash2 } from 'lucide-react'
 
@@ -16,7 +16,7 @@ const VariantOptionImageUploadForm = ({ variantId, optionId, productId, onSucces
   const fileInputRef = useRef(null)
 
   const createImageMutation = useMutation({
-    mutationFn: (imageUrl) => productService.createVariantOptionImage(variantId, optionId, imageUrl),
+    mutationFn: (imageData) => productService.createVariantOptionImage(variantId, optionId, imageData),
     onSuccess: () => {
       toast.success('Image Added', 'Image has been added successfully')
       queryClient.invalidateQueries({ queryKey: ['variant-options', variantId] })
@@ -61,8 +61,8 @@ const VariantOptionImageUploadForm = ({ variantId, optionId, productId, onSucces
 
     setIsUploadingImage(true)
     try {
-      const imageUrl = await uploadToCloudinary(selectedImageFile)
-      createImageMutation.mutate(imageUrl)
+      const uploaded = await uploadImageToStorage(selectedImageFile)
+      createImageMutation.mutate(uploaded)
     } catch (error) {
       toast.error('Upload Failed', error.message || 'Failed to upload image')
     } finally {

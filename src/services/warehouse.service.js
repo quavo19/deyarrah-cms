@@ -37,11 +37,10 @@ export const warehouseService = {
     return response.data
   },
 
-  addWarehouseImage: async (warehouseId, imageUrl) => {
+  addWarehouseImage: async (warehouseId, imageData) => {
+    const payload = typeof imageData === 'string' ? { url: imageData } : imageData
     const response = await api.post(ENDPOINTS.WAREHOUSES.IMAGES.CREATE(warehouseId), {
-      image: {
-        url: imageUrl
-      }
+      image: payload
     })
     return response.data
   },

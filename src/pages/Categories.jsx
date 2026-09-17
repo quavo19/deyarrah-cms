@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { MoreVertical, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { categoryService } from '@/services/category.service'
+import { uploadImageToStorage } from '@/utils/storage'
 import { SearchInput } from '@/components/ui/SearchInput'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -12,7 +13,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import CenterModal from '@/components/ui/CenterModal'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 
-const emptyCategoryForm = { name: '', description: '' }
+const emptyCategoryForm = { name: '', description: '', image_url: '', image_storage_key: '', image_file: null }
 
 const Categories = () => {
   const toast = useToast()
@@ -78,19 +79,36 @@ const Categories = () => {
   }
 
   const openEditModal = (category) => {
-    setCategoryForm({
-      name: category.name || '',
-      description: category.description || '',
-    })
+      setCategoryForm({
+        name: category.name || '',
+        description: category.description || '',
+        image_url: category.image_url || '',
+        image_storage_key: category.image_storage_key || '',
+        image_file: null,
+      })
     setFormErrors({})
     setCategoryModal({ open: true, category })
     setOpenActionsId(null)
   }
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!categoryForm.name.trim()) {
       setFormErrors({ name: 'Name is required' })
       return
+    }
+
+    let imageUrl = categoryForm.image_url
+    let imageStorageKey = categoryForm.image_storage_key
+
+    if (categoryForm.image_file) {
+      try {
+        const uploaded = await uploadImageToStorage(categoryForm.image_file)
+        imageUrl = uploaded.url
+        imageStorageKey = uploaded.storage_key
+      } catch (error) {
+        toast.error('Upload Failed', error.message || 'Failed to upload category image')
+        return
+      }
     }
 
     saveCategoryMutation.mutate({
@@ -98,6 +116,8 @@ const Categories = () => {
       payload: {
         name: categoryForm.name.trim(),
         description: categoryForm.description.trim() || undefined,
+        image_url: imageUrl || null,
+        image_storage_key: imageStorageKey || null,
       },
     })
   }
@@ -152,12 +172,17 @@ const Categories = () => {
                   filteredCategories.map((category) => (
                     <tr key={category.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => navigate(`/categories/${category.id}`)}
-                          className="cursor-pointer text-left text-sm font-medium text-gray-900 hover:underline"
-                        >
-                          {category.name}
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {category.image_url && (
+                            <img src={category.image_url} alt="" className="h-10 w-10 rounded object-cover bg-gray-100" />
+                          )}
+                          <button
+                            onClick={() => navigate(`/categories/${category.id}`)}
+                            className="cursor-pointer text-left text-sm font-medium text-gray-900 hover:underline"
+                          >
+                            {category.name}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 max-w-xl">
                         <div className="line-clamp-2">{category.description || 'No description'}</div>
@@ -240,6 +265,18 @@ const Categories = () => {
               placeholder="Optional description for this category"
               rows={3}
             />
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">Category Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCategoryForm({ ...categoryForm, image_file: e.target.files?.[0] || null })}
+                className="block w-full text-sm text-gray-700"
+              />
+              {categoryForm.image_url && !categoryForm.image_file && (
+                <img src={categoryForm.image_url} alt="" className="mt-3 h-24 w-24 rounded object-cover bg-gray-100" />
+              )}
+            </div>
             <div className="flex gap-3 justify-end pt-4">
               <Button onClick={() => setCategoryModal({ open: false, category: null })} className="w-auto bg-gray-200! text-gray-700! border-gray-300 hover:bg-gray-50 cursor-pointer">
                 Cancel

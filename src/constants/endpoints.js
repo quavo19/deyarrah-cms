@@ -127,6 +127,35 @@ export const ENDPOINTS = {
       DELETE: (warehouseId, imageId) => `${BASE_URL}/warehouses/${warehouseId}/images/${imageId}`,
     },
   },
+  DELIVERY: {
+    ZONES: {
+      LIST: `${BASE_URL}/delivery_zones`,
+      CREATE: `${BASE_URL}/delivery_zones`,
+      UPDATE: (id) => `${BASE_URL}/delivery_zones/${id}`,
+      DELETE: (id) => `${BASE_URL}/delivery_zones/${id}`,
+    },
+    WEIGHT_TIERS: {
+      LIST: `${BASE_URL}/delivery_weight_tiers`,
+      CREATE: `${BASE_URL}/delivery_weight_tiers`,
+      UPDATE: (id) => `${BASE_URL}/delivery_weight_tiers/${id}`,
+      DELETE: (id) => `${BASE_URL}/delivery_weight_tiers/${id}`,
+    },
+    HIGH_VALUE_RATES: {
+      LIST: `${BASE_URL}/delivery_high_value_rates`,
+      CREATE: `${BASE_URL}/delivery_high_value_rates`,
+      UPDATE: (id) => `${BASE_URL}/delivery_high_value_rates/${id}`,
+      DELETE: (id) => `${BASE_URL}/delivery_high_value_rates/${id}`,
+    },
+    SETTINGS: `${BASE_URL}/delivery_settings`,
+  },
+  AFFILIATES: {
+    LIST: `${BASE_URL}/affiliates`,
+    DETAIL: (id) => `${BASE_URL}/affiliates/${id}`,
+    APPROVE: (id) => `${BASE_URL}/affiliates/${id}/approve`,
+    REJECT: (id) => `${BASE_URL}/affiliates/${id}/reject`,
+    SUSPEND: (id) => `${BASE_URL}/affiliates/${id}/suspend`,
+    REACTIVATE: (id) => `${BASE_URL}/affiliates/${id}/reactivate`,
+  },
   CONTACTS: {
     LIST: `${BASE_URL}/contacts`,
     DELETE: (id) => `${BASE_URL}/contacts/${id}`,

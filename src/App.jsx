@@ -12,6 +12,8 @@ import Dashboard from '@/pages/Dashboard'
 import Users from '@/pages/Users'
 import UserDetail from '@/pages/Users/Detail'
 import Settings from '@/pages/Settings'
+import DeliverySettings from '@/pages/DeliverySettings'
+import Affiliates from '@/pages/Affiliates'
 import Inventory from '@/pages/Inventory'
 import NewInventory from '@/pages/Inventory/New'
 import Products from '@/pages/Products'
@@ -87,6 +89,22 @@ function App() {
                 <Route path="/users" element={<Users />} />
                 <Route path="/users/:id" element={<UserDetail />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route
+                  path="/delivery-settings"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                      <DeliverySettings />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/affiliates"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                      <Affiliates />
+                    </RoleProtectedRoute>
+                  }
+                />
                 <Route
                   path="/inventory"
                   element={

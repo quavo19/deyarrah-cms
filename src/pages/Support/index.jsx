@@ -6,6 +6,7 @@ import { supportService } from '@/services/support.service'
 import { SearchInput } from '@/components/ui/SearchInput'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
+import Pagination from '@/components/ui/Pagination'
 import TableSkeleton from '@/components/ui/TableSkeleton'
 import Image from '@/components/ui/Image'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -77,7 +78,6 @@ const Support = () => {
 
   const requests = useMemo(() => data?.data || [], [data])
   const meta = data?.meta || {}
-  const totalPages = meta.total_pages || 1
 
   const deleteMutation = useMutation({
     mutationFn: supportService.delete,
@@ -247,19 +247,13 @@ const Support = () => {
           </div>
         </div>
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-700">
-            <span>Page {meta.current_page || page} of {totalPages}</span>
-            <div className="flex gap-2">
-              <Button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page <= 1} className="px-4 py-2 text-sm">
-                Previous
-              </Button>
-              <Button onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page >= totalPages} className="px-4 py-2 text-sm">
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+        <Pagination
+          meta={meta}
+          page={page}
+          onPageChange={setPage}
+          isLoading={isLoading || isRefetching}
+          className="mt-4"
+        />
 
         <ConfirmModal
           open={deleteModal.open}

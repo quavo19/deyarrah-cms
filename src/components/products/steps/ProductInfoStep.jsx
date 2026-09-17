@@ -10,6 +10,31 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
     { value: 'bulk', label: 'Bulk (with variants)' },
     { value: 'unit', label: 'Unit (no variants)' },
   ]
+  const shippingTypeOptions = [
+    { value: 'bulk', label: 'Bulk / non-fragile' },
+    { value: 'high_value', label: 'High-value / fragile' },
+  ]
+  const weightClassOptions = [
+    { value: 'light', label: 'Light (about 0.3kg)' },
+    { value: 'medium', label: 'Medium (about 1kg)' },
+    { value: 'heavy', label: 'Heavy (about 3kg)' },
+  ]
+
+  const searchKeywordsValue = Array.isArray(formData.search_keywords)
+    ? formData.search_keywords.join(', ')
+    : formData.search_keywords || ''
+
+  const handleSearchKeywordsChange = (event) => {
+    onChange({
+      target: {
+        name: 'search_keywords',
+        value: event.target.value
+          .split(',')
+          .map((keyword) => keyword.trim())
+          .filter(Boolean),
+      },
+    })
+  }
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['categories'],
@@ -163,6 +188,73 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
             onChange={onChange}
             error={errors.bonus_points}
             placeholder="0"
+          />
+        </div>
+
+        <div>
+          <Select
+            label="Shipping Type"
+            name="shipping_type"
+            value={formData.shipping_type || 'bulk'}
+            onChange={onChange}
+            options={shippingTypeOptions}
+            error={errors.shipping_type}
+            required
+            placeholder="Select shipping type"
+          />
+        </div>
+
+        {(formData.shipping_type || 'bulk') === 'bulk' ? (
+          <>
+            <div>
+              <Select
+                label="Weight Class"
+                name="weight_class"
+                value={formData.weight_class || 'medium'}
+                onChange={onChange}
+                options={weightClassOptions}
+                error={errors.weight_class}
+                placeholder="Select weight class"
+              />
+            </div>
+
+            <div>
+              <Input
+                label="Exact Weight (kg)"
+                name="weight_kg"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.weight_kg || ''}
+                onChange={onChange}
+                error={errors.weight_kg}
+                placeholder="Optional"
+              />
+            </div>
+          </>
+        ) : (
+          <div>
+            <Input
+              label="Shipping Category"
+              name="shipping_category"
+              value={formData.shipping_category || ''}
+              onChange={onChange}
+              error={errors.shipping_category}
+              required
+              placeholder="phone, laptop, electronics"
+            />
+          </div>
+        )}
+
+        <div className="md:col-span-2">
+          <Textarea
+            label="Hidden Search Keywords"
+            name="search_keywords"
+            value={searchKeywordsValue}
+            onChange={handleSearchKeywordsChange}
+            error={errors.search_keywords}
+            placeholder="phone, iphone, electronic phone, cell phone, caller"
+            rows={3}
           />
         </div>
       </div>

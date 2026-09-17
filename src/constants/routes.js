@@ -7,7 +7,9 @@ import {
   Warehouse,
   Clock,
   ClipboardList,
-  Mail
+  Mail,
+  Truck,
+  Handshake
 } from "lucide-react"
 
 export const routes = [
@@ -70,6 +72,18 @@ export const routes = [
     title: "Downtimes",
     icon: Clock,
     path: "/downtimes",
+    roles: ["ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    title: "Delivery",
+    icon: Truck,
+    path: "/delivery-settings",
+    roles: ["ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    title: "Affiliates",
+    icon: Handshake,
+    path: "/affiliates",
     roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {

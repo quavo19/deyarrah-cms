@@ -7,6 +7,7 @@ import { categoryService } from '@/services/category.service'
 import BackButton from '@/components/ui/BackButton'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
+import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import TableSkeleton from '@/components/ui/TableSkeleton'
@@ -35,6 +36,11 @@ const ProductDetail = () => {
     sub_category_ids: [],
     delivery_rate_per_km: '',
     bonus_points: '',
+    shipping_type: 'bulk',
+    weight_kg: '',
+    weight_class: 'medium',
+    shipping_category: '',
+    search_keywords: [],
   })
 
   const {
@@ -50,6 +56,15 @@ const ProductDetail = () => {
   const attrs = product?.attributes || {}
   const reviews = attrs.reviews || []
   const reviewSummary = attrs.review_summary || {}
+  const shippingTypeOptions = [
+    { value: 'bulk', label: 'Bulk / non-fragile' },
+    { value: 'high_value', label: 'High-value / fragile' },
+  ]
+  const weightClassOptions = [
+    { value: 'light', label: 'Light (about 0.3kg)' },
+    { value: 'medium', label: 'Medium (about 1kg)' },
+    { value: 'heavy', label: 'Heavy (about 3kg)' },
+  ]
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories'],
@@ -152,6 +167,11 @@ const ProductDetail = () => {
       sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
       bonus_points: attrs.bonus_points ?? '',
+      shipping_type: attrs.shipping_type || 'bulk',
+      weight_kg: attrs.weight_kg ?? '',
+      weight_class: attrs.weight_class || 'medium',
+      shipping_category: attrs.shipping_category || '',
+      search_keywords: attrs.search_keywords || [],
     })
     setIsEditingProduct(true)
   }
@@ -167,6 +187,11 @@ const ProductDetail = () => {
       sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
       bonus_points: attrs.bonus_points ?? '',
+      shipping_type: attrs.shipping_type || 'bulk',
+      weight_kg: attrs.weight_kg ?? '',
+      weight_class: attrs.weight_class || 'medium',
+      shipping_category: attrs.shipping_category || '',
+      search_keywords: attrs.search_keywords || [],
     })
   }
 
@@ -185,6 +210,11 @@ const ProductDetail = () => {
       sub_category_ids: editFormData.sub_category_ids || [],
       delivery_rate_per_km: editFormData.delivery_rate_per_km || null,
       bonus_points: Number(editFormData.bonus_points || 0),
+      shipping_type: editFormData.shipping_type || 'bulk',
+      weight_kg: editFormData.weight_kg || null,
+      weight_class: editFormData.weight_class || null,
+      shipping_category: editFormData.shipping_category || null,
+      search_keywords: editFormData.search_keywords || [],
     })
   }
 
@@ -193,6 +223,16 @@ const ProductDetail = () => {
     setEditFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+  }
+
+  const handleEditKeywordsChange = (e) => {
+    setEditFormData(prev => ({
+      ...prev,
+      search_keywords: e.target.value
+        .split(',')
+        .map((keyword) => keyword.trim())
+        .filter(Boolean)
     }))
   }
 
@@ -392,6 +432,58 @@ const ProductDetail = () => {
                       placeholder="0"
                       inputClassName=" py-[5px]! text-sm rounded-lg!"
                     />
+                    <Select
+                      label="Shipping Type"
+                      name="shipping_type"
+                      value={editFormData.shipping_type || 'bulk'}
+                      onChange={handleEditFormChange}
+                      options={shippingTypeOptions}
+                      placeholder="Select shipping type"
+                      selectClassName="py-[6px]! text-sm rounded-lg!"
+                    />
+                    {(editFormData.shipping_type || 'bulk') === 'bulk' ? (
+                      <>
+                        <Select
+                          label="Weight Class"
+                          name="weight_class"
+                          value={editFormData.weight_class || 'medium'}
+                          onChange={handleEditFormChange}
+                          options={weightClassOptions}
+                          placeholder="Select weight class"
+                          selectClassName="py-[6px]! text-sm rounded-lg!"
+                        />
+                        <Input
+                          label="Exact Weight (kg)"
+                          name="weight_kg"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editFormData.weight_kg || ''}
+                          onChange={handleEditFormChange}
+                          placeholder="Optional"
+                          inputClassName=" py-[5px]! text-sm rounded-lg!"
+                        />
+                      </>
+                    ) : (
+                      <Input
+                        label="Shipping Category"
+                        name="shipping_category"
+                        value={editFormData.shipping_category || ''}
+                        onChange={handleEditFormChange}
+                        placeholder="phone, laptop, electronics"
+                        inputClassName=" py-[5px]! text-sm rounded-lg!"
+                      />
+                    )}
+                    <div className="md:col-span-2">
+                      <Textarea
+                        label="Hidden Search Keywords"
+                        name="search_keywords"
+                        value={Array.isArray(editFormData.search_keywords) ? editFormData.search_keywords.join(', ') : editFormData.search_keywords || ''}
+                        onChange={handleEditKeywordsChange}
+                        placeholder="phone, iphone, electronic phone, cell phone, caller"
+                        rows={3}
+                      />
+                    </div>
                 </div>
               </div>
             ) : (
@@ -495,6 +587,32 @@ const ProductDetail = () => {
                       <dt className="text-sm font-light text-gray-500 mb-1">Delivery Rate Per KM</dt>
                       <dd className="text-sm text-gray-900 font-light">
                         {attrs.delivery_rate_per_km ? `GHS ${parseFloat(attrs.delivery_rate_per_km).toFixed(2)}` : '—'}
+                      </dd>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
+                    <Truck className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <dt className="text-sm font-light text-gray-500 mb-1">Shipping</dt>
+                    <dd className="text-sm text-gray-900 font-light">
+                      {attrs.shipping_type === 'high_value'
+                        ? `High-value (${attrs.shipping_category || 'category pending'})`
+                        : `Bulk (${attrs.weight_kg ? `${attrs.weight_kg}kg` : attrs.weight_class || 'medium'})`}
+                    </dd>
+                  </div>
+                </div>
+                {(attrs.search_keywords || []).length > 0 && (
+                  <div className="md:col-span-2 flex items-start gap-3">
+                    <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
+                      <Tag className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="flex-1">
+                      <dt className="text-sm font-light text-gray-500 mb-1">Hidden Search Keywords</dt>
+                      <dd className="text-sm text-gray-900 font-light">
+                        {attrs.search_keywords.join(', ')}
                       </dd>
                     </div>
                   </div>

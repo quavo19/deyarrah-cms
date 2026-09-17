@@ -53,7 +53,7 @@ const Select = ({
         value: optionValue,
       },
     };
-    onChange(syntheticEvent); 
+    onChange(syntheticEvent);
     setIsOpen(false);
     openDropdownIdRef.current = null;
   };
@@ -91,14 +91,14 @@ const Select = ({
         <button
           type="button"
           disabled={disabled}
-          className={`w-full text-left rounded-xl border px-[16px] py-[12px]  transition-all duration-200 ${
+          className={`w-full text-left rounded-xl border px-4 py-3 transition-all duration-200 ${
             disabled
               ? "bg-gray-100 cursor-not-allowed border-gray-300"
               : error
-              ? "border-red-500 focus:border-red-500"
+              ? "border-red-500 focus:border-red-500 cursor-pointer"
               : success
-              ? "border-green-500 focus:border-green-500"
-              : "border-gray-300 "
+              ? "border-green-500 focus:border-green-500 cursor-pointer"
+              : "border-gray-300 cursor-pointer"
           } ${selectClassName}`}
           onClick={toggleDropdown}
         >
@@ -132,9 +132,7 @@ const Select = ({
                 key={option.value}
                 className={`px-4 py-2 cursor-pointer hover:bg-gray-100 truncate ${
                   value === option.value ? "bg-gray-200" : ""
-                } ${
-                  index === 0 ? "rounded-t-xl" : ""
-                } ${
+                } ${index === 0 ? "rounded-t-xl" : ""} ${
                   index === options.length - 1 ? "rounded-b-xl" : ""
                 }`}
                 onClick={() => handleOptionClick(option.value)}

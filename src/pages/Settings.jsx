@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useToast } from '@/hooks/useToast'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService } from '@/services/user.service'
-import { uploadToCloudinary } from '@/utils/cloudinary'
+import { uploadImageToStorage } from '@/utils/storage'
 import { validateEmail, validateName, validatePassword, validatePasswordConfirmation } from '@/utils'
 import Input from '@/components/ui/Input'
 import PasswordInput from '@/components/ui/PasswordInput'
@@ -20,6 +20,7 @@ const Settings = () => {
     first_name: '',
     last_name: '',
     avatar: '',
+    avatar_storage_key: '',
   })
   const [passwordFormData, setPasswordFormData] = useState({
     old_password: '',
@@ -48,6 +49,7 @@ const Settings = () => {
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
     avatar: user?.avatar || '',
+    avatar_storage_key: user?.avatar_storage_key || '',
   }
   const displayAvatarPreview = isEditing ? avatarPreview : (user?.avatar || null)
 
@@ -56,11 +58,14 @@ const Settings = () => {
     mutationFn: async (userData) => {
       setUpdateProgress(0)
       let avatarUrl = userData.avatar
+      let avatarStorageKey = userData.avatar_storage_key
 
       if (avatarFile) {
         try {
           setUpdateProgress(20)
-          avatarUrl = await uploadToCloudinary(avatarFile)
+          const uploaded = await uploadImageToStorage(avatarFile)
+          avatarUrl = uploaded.url
+          avatarStorageKey = uploaded.storage_key
           setUpdateProgress(50)
         } catch (error) {
           setUpdateProgress(0)
@@ -77,6 +82,7 @@ const Settings = () => {
         first_name: userData.first_name,
         last_name: userData.last_name,
         avatar: avatarUrl || undefined,
+        avatar_storage_key: avatarStorageKey || undefined,
       }
 
       const updateProgressInterval = setInterval(() => {
@@ -108,6 +114,7 @@ const Settings = () => {
           first_name: user.first_name || '',
           last_name: user.last_name || '',
           avatar: user.avatar || '',
+          avatar_storage_key: user.avatar_storage_key || '',
         })
         // Update avatar preview if avatar exists
         if (user.avatar) {
@@ -320,6 +327,7 @@ const Settings = () => {
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         avatar: user.avatar || '',
+        avatar_storage_key: user.avatar_storage_key || '',
       })
       setAvatarPreview(user.avatar || null)
     }

@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button'
 import { useMutation } from '@tanstack/react-query'
 import { authService } from '@/services/auth.service'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import logoImage from '@/assets/images/logo.png'
 
 const ResetPassword = () => {
   const toast = useToast()
@@ -105,7 +106,7 @@ const ResetPassword = () => {
       <div className="max-w-md w-full space-y-8 p-8">
         <div>
           <img 
-            src="https://res.cloudinary.com/dqdyxf1jv/image/upload/v1768622270/pv-logo_zxretf.png" 
+            src={logoImage} 
             alt="Logo" 
             className="h-24 mx-auto mb-6"
           />
