@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Truck, Plus, Save, Trash2 } from 'lucide-react'
+import { Plus, Save, Trash2 } from 'lucide-react'
 import { deliveryService } from '@/services/delivery.service'
 import { useToast } from '@/hooks/useToast'
 import Button from '@/components/ui/Button'
@@ -141,14 +141,9 @@ const DeliverySettings = () => {
   return (
     <div className="bg-gray-50 montserrat min-h-screen">
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-8">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-white rounded-lg border border-gray-200">
-            <Truck className="w-5 h-5 text-gray-700" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Delivery Settings</h1>
-            <p className="text-sm text-gray-600">Configure delivery zones, bulk tiers, and fragile-item rates.</p>
-          </div>
+        <div>
+          <h1 className="text-lg sm:text-xl font-semibold">Delivery Settings</h1>
+          <p className="text-sm text-gray-600">Configure delivery zones, bulk tiers, and fragile-item rates.</p>
         </div>
 
         {isLoading ? (
