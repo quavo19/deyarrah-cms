@@ -358,7 +358,7 @@ const Settings = () => {
     <div className="bg-gray-50 montserrat">
       <div className="max-w-4xl p-6">
         <div className="flex flex-col mb-4">
-            <h1 className="text-2xl font-bold ">Settings</h1>
+            <h1 className="text-lg sm:text-xl font-semibold ">Settings</h1>
             <p className="text-gray-600">Manage your account settings and preferences.</p>
         </div>
         <div>
