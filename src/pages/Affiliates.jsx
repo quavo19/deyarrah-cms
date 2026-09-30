@@ -2,10 +2,11 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
-  Handshake,
   PauseCircle,
+  Percent,
   RefreshCw,
   RotateCcw,
+  Save,
   Search,
   XCircle,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import CenterModal from "@/components/ui/CenterModal";
 import Input from "@/components/ui/Input";
 import Pagination from "@/components/ui/Pagination";
 import Select from "@/components/ui/Select";
+import { SlideToggle } from "@/components/ui/SlideToggle";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import Textarea from "@/components/ui/Textarea";
 
@@ -50,6 +52,12 @@ const formatDate = (value) => {
 
 const money = (value) => `GHS ${Number(value || 0).toFixed(2)}`;
 
+const emptySettings = {
+  signup_referral_percentage: 0,
+  signup_referral_cap_amount: 0,
+  signup_referral_enabled: true,
+};
+
 const Affiliates = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -60,6 +68,7 @@ const Affiliates = () => {
     open: false,
     application: null,
   });
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
   const params = useMemo(
@@ -81,6 +90,12 @@ const Affiliates = () => {
   const meta = applicationsQuery.data?.meta || {};
   const selectedApplication = reviewModal.application;
   const selectedAttrs = selectedApplication?.attributes || {};
+
+  const settingsQuery = useQuery({
+    queryKey: ["affiliate-settings"],
+    queryFn: affiliateService.getSettings,
+    enabled: settingsModalOpen,
+  });
 
   const closeReviewModal = () => {
     setReviewModal({ open: false, application: null });
@@ -170,6 +185,32 @@ const Affiliates = () => {
     },
   });
 
+  const saveSettingsMutation = useMutation({
+    mutationFn: (nextSettings) =>
+      affiliateService.updateSettings({
+        signup_referral_percentage: Number(
+          nextSettings.signup_referral_percentage || 0
+        ),
+        signup_referral_cap_amount: Number(
+          nextSettings.signup_referral_cap_amount || 0
+        ),
+        signup_referral_enabled: Boolean(nextSettings.signup_referral_enabled),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["affiliate-settings"] });
+      toast.success(
+        "Settings Saved",
+        "Signup referral rewards have been updated."
+      );
+    },
+    onError: (error) => {
+      toast.error(
+        "Save Failed",
+        error.response?.data?.error || "Could not save affiliate settings"
+      );
+    },
+  });
+
   const handleApprove = () => {
     if (!selectedApplication) return;
     approveMutation.mutate(selectedApplication.id);
@@ -200,30 +241,35 @@ const Affiliates = () => {
     <div className="bg-gray-50 montserrat min-h-screen">
       <div className="w-full p-4 sm:p-6 space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white rounded-lg border border-gray-200">
-              <Handshake className="w-5 h-5 text-gray-700" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">
-                Affiliate Requests
-              </h1>
-              <p className="text-sm text-gray-600">
-                Review applications, approve qualified affiliates, or deny
-                requests with a reason.
-              </p>
-            </div>
+          <div>
+            <h1 className="text-lg sm:text-xl font-semibold">
+              Affiliate Requests
+            </h1>
+            <p className="text-sm text-gray-600">
+              Review applications, approve qualified affiliates, or deny
+              requests with a reason.
+            </p>
           </div>
-          <Button
-            auto
-            className="gap-2"
-            onClick={() => applicationsQuery.refetch()}
-            isLoading={applicationsQuery.isFetching}
-            loadingText="Refreshing"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button
+              auto
+              className="gap-2 bg-gray-800! hover:bg-gray-900!"
+              onClick={() => setSettingsModalOpen(true)}
+            >
+              <Percent className="w-4 h-4" />
+              Affiliate configuration
+            </Button>
+            <Button
+              auto
+              className="gap-2"
+              onClick={() => applicationsQuery.refetch()}
+              isLoading={applicationsQuery.isFetching}
+              loadingText="Refreshing"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_1fr]">
@@ -347,6 +393,7 @@ const Affiliates = () => {
             />
           </>
         )}
+
       </div>
 
       <CenterModal
@@ -410,11 +457,6 @@ const Affiliates = () => {
                 value={(selectedAttrs.social_links || []).join("\n")}
                 preserve
               />
-              <DetailBlock
-                label="Payout details"
-                value={formatPayout(selectedAttrs.payout_details)}
-                preserve
-              />
               {selectedAttrs.rejection_reason && (
                 <DetailBlock
                   label="Last denial reason"
@@ -422,6 +464,27 @@ const Affiliates = () => {
                 />
               )}
             </div>
+
+            {(selectedAttrs.social_link_conflicts || []).length > 0 && (
+              <div className="bg-red-50 p-3 text-sm text-red-900">
+                <p className="font-semibold">
+                  Social account already used
+                </p>
+                <div className="mt-2 space-y-2">
+                  {selectedAttrs.social_link_conflicts.map((conflict) => (
+                    <div key={conflict.id}>
+                      <p>
+                        {conflict.full_name || conflict.email || "Affiliate"} ·{" "}
+                        {conflict.status}
+                      </p>
+                      <p className="text-xs break-words">
+                        {(conflict.matching_links || []).join(", ")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {selectedAttrs.reapplication_block_reason && (
               <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-900">
@@ -496,7 +559,113 @@ const Affiliates = () => {
           </div>
         )}
       </CenterModal>
+
+      <CenterModal
+        open={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        heading="Affiliate configuration"
+        description="Set signup referral rewards for the referred customer's first three received orders."
+        className="max-w-2xl"
+      >
+        {settingsQuery.isLoading ? (
+          <p className="text-sm text-gray-500">Loading configuration...</p>
+        ) : (
+          <AffiliateSettingsForm
+            initialSettings={{
+              ...emptySettings,
+              ...(settingsQuery.data?.data?.attributes || {}),
+            }}
+            onSave={(nextSettings) => saveSettingsMutation.mutate(nextSettings)}
+            isSaving={saveSettingsMutation.isPending}
+          />
+        )}
+      </CenterModal>
     </div>
+  );
+};
+
+const AffiliateSettingsForm = ({ initialSettings, onSave, isSaving }) => {
+  const [settings, setSettings] = useState(initialSettings);
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave(settings);
+      }}
+      className="space-y-5"
+    >
+      <div className="flex flex-col gap-4 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-900">
+            Signup referral rewards
+          </p>
+          <p className="mt-1 text-sm leading-6 text-gray-600">
+            Turn this on to reward affiliates when referred customers place
+            eligible received orders. Turning it off stops new signup referral
+            rewards without changing existing earnings.
+          </p>
+        </div>
+        <SlideToggle
+          value={Boolean(settings.signup_referral_enabled)}
+          onChange={(value) =>
+            setSettings({
+              ...settings,
+              signup_referral_enabled: value,
+            })
+          }
+          onLabel="Enabled"
+          offLabel="Disabled"
+          containerClassName="shrink-0 sm:justify-end"
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Input
+          label="Signup reward percentage"
+          type="number"
+          min="0"
+          step="0.01"
+          value={settings.signup_referral_percentage}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              signup_referral_percentage: event.target.value,
+            })
+          }
+          placeholder="10"
+        />
+        <Input
+          label="Per-order cap amount"
+          type="number"
+          min="0"
+          step="0.01"
+          value={settings.signup_referral_cap_amount}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              signup_referral_cap_amount: event.target.value,
+            })
+          }
+          placeholder="50"
+        />
+      </div>
+
+      <p className="text-sm text-gray-600">
+        Formula: commission = min(order total × percentage, cap). This runs once
+        for each of the referred customer's first three received orders.
+      </p>
+
+      <Button
+        type="submit"
+        className="gap-2"
+        isLoading={isSaving}
+        loadingText="Saving"
+      >
+        <Save className="w-4 h-4" />
+        Save configuration
+      </Button>
+    </form>
   );
 };
 
@@ -543,14 +712,6 @@ const EmptyState = () => (
     No affiliate requests found.
   </div>
 );
-
-const formatPayout = (details = {}) => {
-  const entries = Object.entries(details || {});
-  if (entries.length === 0) return "—";
-  return entries
-    .map(([key, value]) => `${key.replaceAll("_", " ")}: ${value}`)
-    .join("\n");
-};
 
 const DetailBlock = ({ label, value, preserve = false }) => (
   <div>
