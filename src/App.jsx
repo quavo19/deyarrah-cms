@@ -14,6 +14,8 @@ import UserDetail from '@/pages/Users/Detail'
 import Settings from '@/pages/Settings'
 import DeliverySettings from '@/pages/DeliverySettings'
 import Affiliates from '@/pages/Affiliates'
+import AffiliateWithdrawals from '@/pages/AffiliateWithdrawals'
+import Transactions from '@/pages/Transactions'
 import Inventory from '@/pages/Inventory'
 import NewInventory from '@/pages/Inventory/New'
 import Products from '@/pages/Products'
@@ -102,6 +104,22 @@ function App() {
                   element={
                     <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
                       <Affiliates />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/affiliate-withdrawals"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                      <AffiliateWithdrawals />
+                    </RoleProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/transactions"
+                  element={
+                    <RoleProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                      <Transactions />
                     </RoleProtectedRoute>
                   }
                 />
