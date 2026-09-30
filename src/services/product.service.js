@@ -44,6 +44,7 @@ export const productService = {
           category_ids: productData.category_ids || (productData.category_id ? [productData.category_id] : []),
           sub_category_ids: productData.sub_category_ids || [],
           delivery_rate_per_km: productData.delivery_rate_per_km || null,
+          affiliate_commission_amount: productData.affiliate_commission_amount || 0,
           bonus_points: productData.bonus_points || 0,
           shipping_type: productData.shipping_type || 'bulk',
           weight_kg: productData.weight_kg || null,
