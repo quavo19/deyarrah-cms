@@ -17,7 +17,7 @@ import ProductVariantsSection from '@/components/products/ProductVariantsSection
 import ProductMetaSection from '@/components/products/ProductMetaSection'
 import ProductVariantStocksSection from '@/components/products/ProductVariantStocksSection'
 import ProductImagesSection from '@/components/products/ProductImagesSection'
-import { Trash2, X, Package, Tag, FileText, Grid3x3, Settings, Truck, Star } from 'lucide-react'
+import { Trash2, X, Package, Tag, FileText, Grid3x3, Settings, Truck, Star, BadgeDollarSign } from 'lucide-react'
 
 const ProductDetail = () => {
   const toast = useToast()
@@ -35,6 +35,7 @@ const ProductDetail = () => {
     category_ids: [],
     sub_category_ids: [],
     delivery_rate_per_km: '',
+    affiliate_commission_amount: '',
     bonus_points: '',
     shipping_type: 'bulk',
     weight_kg: '',
@@ -166,6 +167,7 @@ const ProductDetail = () => {
       category_ids: attrs.category_ids || attrs.categories?.map((category) => category.id) || [],
       sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
+      affiliate_commission_amount: attrs.affiliate_commission_amount ?? '',
       bonus_points: attrs.bonus_points ?? '',
       shipping_type: attrs.shipping_type || 'bulk',
       weight_kg: attrs.weight_kg ?? '',
@@ -186,6 +188,7 @@ const ProductDetail = () => {
       category_ids: attrs.category_ids || attrs.categories?.map((category) => category.id) || [],
       sub_category_ids: attrs.sub_category_ids || attrs.sub_categories?.map((subCategory) => subCategory.id) || [],
       delivery_rate_per_km: attrs.delivery_rate_per_km || '',
+      affiliate_commission_amount: attrs.affiliate_commission_amount ?? '',
       bonus_points: attrs.bonus_points ?? '',
       shipping_type: attrs.shipping_type || 'bulk',
       weight_kg: attrs.weight_kg ?? '',
@@ -209,6 +212,7 @@ const ProductDetail = () => {
       category_ids: editFormData.category_ids || [],
       sub_category_ids: editFormData.sub_category_ids || [],
       delivery_rate_per_km: editFormData.delivery_rate_per_km || null,
+      affiliate_commission_amount: Number(editFormData.affiliate_commission_amount || 0),
       bonus_points: Number(editFormData.bonus_points || 0),
       shipping_type: editFormData.shipping_type || 'bulk',
       weight_kg: editFormData.weight_kg || null,
@@ -432,6 +436,17 @@ const ProductDetail = () => {
                       placeholder="0"
                       inputClassName=" py-[5px]! text-sm rounded-lg!"
                     />
+                    <Input
+                      label="Affiliate Commission (GHS)"
+                      name="affiliate_commission_amount"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editFormData.affiliate_commission_amount || ''}
+                      onChange={handleEditFormChange}
+                      placeholder="0.00"
+                      inputClassName=" py-[5px]! text-sm rounded-lg!"
+                    />
                     <Select
                       label="Shipping Type"
                       name="shipping_type"
@@ -536,6 +551,17 @@ const ProductDetail = () => {
                     <dt className="text-sm font-light text-gray-500 mb-1">Bonus Points</dt>
                     <dd className="text-sm text-gray-900 font-light">
                       #{Number(attrs.bonus_points || 0).toLocaleString()}
+                    </dd>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-gray-50 rounded-lg mt-0.5">
+                    <BadgeDollarSign className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1">
+                    <dt className="text-sm font-light text-gray-500 mb-1">Affiliate Commission</dt>
+                    <dd className="text-sm text-gray-900 font-light">
+                      GHS {Number(attrs.affiliate_commission_amount || 0).toFixed(2)}
                     </dd>
                   </div>
                 </div>
