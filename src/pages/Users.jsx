@@ -96,7 +96,7 @@ const Users = () => {
     <div className="bg-gray-50 montserrat">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col mb-6">
-          <h1 className="text-2xl font-bold ">User Management</h1>
+          <h1 className="text-lg sm:text-xl font-semibold ">User Management</h1>
           <p className="text-gray-600">Manage users, roles, permissions, and badges.</p>
         </div>
 
