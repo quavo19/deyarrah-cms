@@ -37,6 +37,13 @@ export const validateProductInfo = (data) => {
     }
   }
 
+  if (data.affiliate_commission_amount !== undefined && data.affiliate_commission_amount !== null && data.affiliate_commission_amount !== '') {
+    const commission = Number(data.affiliate_commission_amount)
+    if (Number.isNaN(commission) || commission < 0) {
+      errors.affiliate_commission_amount = 'Affiliate commission must be 0 or greater'
+    }
+  }
+
   const shippingType = data.shipping_type || 'bulk'
   if (!['bulk', 'high_value'].includes(shippingType)) {
     errors.shipping_type = 'Shipping type must be bulk or high-value'
