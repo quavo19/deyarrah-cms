@@ -179,6 +179,20 @@ const ProductInfoStep = ({ formData, errors, onChange }) => {
 
         <div>
           <Input
+            label="Affiliate Commission (GHS)"
+            name="affiliate_commission_amount"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.affiliate_commission_amount || ''}
+            onChange={onChange}
+            error={errors.affiliate_commission_amount}
+            placeholder="0.00"
+          />
+        </div>
+
+        <div>
+          <Input
             label="Bonus Points"
             name="bonus_points"
             type="number"
