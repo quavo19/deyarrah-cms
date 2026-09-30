@@ -101,6 +101,9 @@ export const ENDPOINTS = {
     LIST: `${BASE_URL}/orders`,
     DETAIL: (id) => `${BASE_URL}/orders/${id}`,
   },
+  TRANSACTIONS: {
+    LIST: `${BASE_URL}/transactions`,
+  },
   CATEGORIES: {
     LIST: `${BASE_URL}/categories`,
     DETAIL: (id) => `${BASE_URL}/categories/${id}`,
@@ -155,6 +158,11 @@ export const ENDPOINTS = {
     REJECT: (id) => `${BASE_URL}/affiliates/${id}/reject`,
     SUSPEND: (id) => `${BASE_URL}/affiliates/${id}/suspend`,
     REACTIVATE: (id) => `${BASE_URL}/affiliates/${id}/reactivate`,
+    WITHDRAWALS: `${BASE_URL}/affiliate_withdrawal_requests`,
+    APPROVE_WITHDRAWAL: (id) => `${BASE_URL}/affiliate_withdrawal_requests/${id}/approve`,
+    REJECT_WITHDRAWAL: (id) => `${BASE_URL}/affiliate_withdrawal_requests/${id}/reject`,
+    PAY_WITHDRAWAL: (id) => `${BASE_URL}/affiliate_withdrawal_requests/${id}/pay`,
+    SETTINGS: `${BASE_URL}/affiliate_settings`,
   },
   CONTACTS: {
     LIST: `${BASE_URL}/contacts`,

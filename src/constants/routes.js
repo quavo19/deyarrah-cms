@@ -1,5 +1,7 @@
 import { 
+  CreditCard,
   LayoutDashboard, 
+  ReceiptText,
   Users, 
   Settings,
   Package,
@@ -84,6 +86,18 @@ export const routes = [
     title: "Affiliates",
     icon: Handshake,
     path: "/affiliates",
+    roles: ["ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    title: "Withdrawals",
+    icon: CreditCard,
+    path: "/affiliate-withdrawals",
+    roles: ["ADMIN", "SUPER_ADMIN"],
+  },
+  {
+    title: "Transactions",
+    icon: ReceiptText,
+    path: "/transactions",
     roles: ["ADMIN", "SUPER_ADMIN"],
   },
   {
