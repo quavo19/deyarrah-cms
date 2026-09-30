@@ -107,7 +107,7 @@ const Warehouses = () => {
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         <div className="flex flex-col mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Space Management</h1>
+            <h1 className="text-lg sm:text-xl font-semibold">Space Management</h1>
             <p className="text-sm sm:text-base text-gray-600">Manage space locations and inventory storage.</p>
           </div>
         </div>
