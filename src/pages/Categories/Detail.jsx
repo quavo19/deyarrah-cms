@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, MoreVertical, Plus } from 'lucide-react'
+import { ArrowLeft, ImageIcon, MoreVertical, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { categoryService } from '@/services/category.service'
 import { uploadImageToStorage } from '@/utils/storage'
@@ -14,6 +14,18 @@ import Textarea from '@/components/ui/Textarea'
 
 const emptySubCategoryForm = { name: '', description: '', image_url: '', image_storage_key: '', image_file: null }
 
+const SubCategoryThumbnail = ({ src, alt = '' }) => {
+  if (src) {
+    return <img src={src} alt={alt} className="h-10 w-10 shrink-0 rounded-md object-cover bg-gray-100" />
+  }
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-400">
+      <ImageIcon className="h-4 w-4" />
+    </div>
+  )
+}
+
 const CategoryDetail = () => {
   const { id } = useParams()
   const toast = useToast()
@@ -24,6 +36,7 @@ const CategoryDetail = () => {
   const [openActionsId, setOpenActionsId] = useState(null)
   const [formData, setFormData] = useState(emptySubCategoryForm)
   const [formErrors, setFormErrors] = useState({})
+  const [isSavingSubCategory, setIsSavingSubCategory] = useState(false)
 
   const { data: categoryData, isLoading, isError } = useQuery({
     queryKey: ['categories', id],
@@ -92,30 +105,35 @@ const CategoryDetail = () => {
       return
     }
 
+    setIsSavingSubCategory(true)
+
     let imageUrl = formData.image_url
     let imageStorageKey = formData.image_storage_key
 
-    if (formData.image_file) {
-      try {
+    try {
+      if (formData.image_file) {
         const uploaded = await uploadImageToStorage(formData.image_file)
         imageUrl = uploaded.url
         imageStorageKey = uploaded.storage_key
-      } catch (error) {
-        toast.error('Upload Failed', error.message || 'Failed to upload subcategory image')
-        return
       }
-    }
 
-    saveSubCategoryMutation.mutate({
-      subCategoryId: subCategoryModal.subCategory?.id,
-      payload: {
-        category_id: id,
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        image_url: imageUrl || null,
-        image_storage_key: imageStorageKey || null,
-      },
-    })
+      await saveSubCategoryMutation.mutateAsync({
+        subCategoryId: subCategoryModal.subCategory?.id,
+        payload: {
+          category_id: id,
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          image_url: imageUrl || null,
+          image_storage_key: imageStorageKey || null,
+        },
+      })
+    } catch (error) {
+      if (!error.response) {
+        toast.error('Upload Failed', error.message || 'Failed to upload subcategory image')
+      }
+    } finally {
+      setIsSavingSubCategory(false)
+    }
   }
 
   if (isLoading) {
@@ -186,9 +204,7 @@ const CategoryDetail = () => {
                     <tr key={subCategory.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <div className="flex items-center gap-3">
-                          {subCategory.image_url && (
-                            <img src={subCategory.image_url} alt="" className="h-10 w-10 rounded object-cover bg-gray-100" />
-                          )}
+                          <SubCategoryThumbnail src={subCategory.image_url} alt={subCategory.name} />
                           <span>{subCategory.name}</span>
                         </div>
                       </td>
@@ -291,8 +307,8 @@ const CategoryDetail = () => {
               </Button>
               <Button
                 onClick={handleSaveSubCategory}
-                isLoading={saveSubCategoryMutation.isPending}
-                loadingText="Saving..."
+                isLoading={isSavingSubCategory}
+                loadingText={formData.image_file ? 'Uploading...' : 'Saving...'}
                 className="w-auto cursor-pointer"
               >
                 Save Subcategory
