@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { MoreVertical, Plus } from 'lucide-react'
+import { ImageIcon, MoreVertical, Plus } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import { categoryService } from '@/services/category.service'
 import { uploadImageToStorage } from '@/utils/storage'
@@ -15,6 +15,18 @@ import TableSkeleton from '@/components/ui/TableSkeleton'
 
 const emptyCategoryForm = { name: '', description: '', image_url: '', image_storage_key: '', image_file: null }
 
+const CategoryThumbnail = ({ src, alt = '' }) => {
+  if (src) {
+    return <img src={src} alt={alt} className="h-10 w-10 shrink-0 rounded-md object-cover bg-gray-100" />
+  }
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-400">
+      <ImageIcon className="h-4 w-4" />
+    </div>
+  )
+}
+
 const Categories = () => {
   const toast = useToast()
   const queryClient = useQueryClient()
@@ -25,6 +37,7 @@ const Categories = () => {
   const [openActionsId, setOpenActionsId] = useState(null)
   const [categoryForm, setCategoryForm] = useState(emptyCategoryForm)
   const [formErrors, setFormErrors] = useState({})
+  const [isSavingCategory, setIsSavingCategory] = useState(false)
 
   const { data: categoriesData, isLoading } = useQuery({
     queryKey: ['categories'],
@@ -97,29 +110,34 @@ const Categories = () => {
       return
     }
 
+    setIsSavingCategory(true)
+
     let imageUrl = categoryForm.image_url
     let imageStorageKey = categoryForm.image_storage_key
 
-    if (categoryForm.image_file) {
-      try {
+    try {
+      if (categoryForm.image_file) {
         const uploaded = await uploadImageToStorage(categoryForm.image_file)
         imageUrl = uploaded.url
         imageStorageKey = uploaded.storage_key
-      } catch (error) {
-        toast.error('Upload Failed', error.message || 'Failed to upload category image')
-        return
       }
-    }
 
-    saveCategoryMutation.mutate({
-      categoryId: categoryModal.category?.id,
-      payload: {
-        name: categoryForm.name.trim(),
-        description: categoryForm.description.trim() || undefined,
-        image_url: imageUrl || null,
-        image_storage_key: imageStorageKey || null,
-      },
-    })
+      await saveCategoryMutation.mutateAsync({
+        categoryId: categoryModal.category?.id,
+        payload: {
+          name: categoryForm.name.trim(),
+          description: categoryForm.description.trim() || undefined,
+          image_url: imageUrl || null,
+          image_storage_key: imageStorageKey || null,
+        },
+      })
+    } catch (error) {
+      if (!error.response) {
+        toast.error('Upload Failed', error.message || 'Failed to upload category image')
+      }
+    } finally {
+      setIsSavingCategory(false)
+    }
   }
 
   return (
@@ -173,9 +191,7 @@ const Categories = () => {
                     <tr key={category.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          {category.image_url && (
-                            <img src={category.image_url} alt="" className="h-10 w-10 rounded object-cover bg-gray-100" />
-                          )}
+                          <CategoryThumbnail src={category.image_url} alt={category.name} />
                           <button
                             onClick={() => navigate(`/categories/${category.id}`)}
                             className="cursor-pointer text-left text-sm font-medium text-gray-900 hover:underline"
@@ -281,7 +297,12 @@ const Categories = () => {
               <Button onClick={() => setCategoryModal({ open: false, category: null })} className="w-auto bg-gray-200! text-gray-700! border-gray-300 hover:bg-gray-50 cursor-pointer">
                 Cancel
               </Button>
-              <Button onClick={handleSaveCategory} isLoading={saveCategoryMutation.isPending} loadingText="Saving..." className="w-auto cursor-pointer">
+              <Button
+                onClick={handleSaveCategory}
+                isLoading={isSavingCategory}
+                loadingText={categoryForm.image_file ? 'Uploading...' : 'Saving...'}
+                className="w-auto cursor-pointer"
+              >
                 {categoryModal.category ? 'Save' : 'Create'}
               </Button>
             </div>
